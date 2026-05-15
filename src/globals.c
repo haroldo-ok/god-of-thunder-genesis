@@ -13,6 +13,7 @@
 u8   apple_drop = 0;
 u8   thor_icon1 = 0, thor_icon2 = 0, thor_icon3 = 0, thor_icon4 = 0;
 u8   diag       = 0;
+u8   diag_flag  = 0;
 
 // Level data arrays (Episode 1-3 packed from SDAT1-3 assets via resources.res)
 // Declared BINARY in resources.res; SGDK exports them as const u8 arrays.

@@ -488,6 +488,8 @@ void cannot_carry_more(void);
 extern u8   end_tile;
 extern u8   apple_drop;
 extern u8   diag;
+extern u8   diag_flag;
+extern u8   thor_special_flag;
 extern u8   story_flag;
 extern s16  thor_real_y1;
 extern u8   magic_cnt;

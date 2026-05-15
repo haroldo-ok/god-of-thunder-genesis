@@ -8,6 +8,11 @@
 
 extern s16 thor_real_y1;
 
+// Explicit cross-TU declarations (avoid LTO int/s16 mismatch)
+extern s16 check_move3(s16 x, s16 y, ACTOR *actr);
+extern s16 check_move4(s16 x, s16 y, ACTOR *actr);
+extern s16 _drop_obj(ACTOR *actr, s16 o);
+
 // THOR - The God of Thunder
 //Source code released to the public domain on March 27th, 2020.
 
