@@ -1,0 +1,1 @@
+out/res/resources.o out/src/back.o out/src/dialog.o out/src/file.o out/src/globals.o out/src/image.o out/src/init.o out/src/main.o out/src/move.o out/src/movpat.o out/src/object.o out/src/panel.o out/src/script.o out/src/shtmov.o out/src/shtpat.o out/src/sound.o out/src/sptile.o

@@ -29,7 +29,6 @@ extern const SpriteDefinition hammer_spr;
 extern const SpriteDefinition fx_spr;
 extern const SpriteDefinition enemy_spr;
 extern const SpriteDefinition npc_spr;
-extern const SpriteDefinition shot_spr;
 
 // ─── Map actor IDs to SpriteDefinition pointers ───────────────────────────────
 // For the enemy/npc sheets, each actor occupies column (actor_sheet_index * 4)
@@ -51,7 +50,7 @@ static const SpriteDefinition *get_sprite_def(const ACTOR *actr) {
                 actr->actor_num == ACT_SHIELD)
                 return &fx_spr;
             return &enemy_spr;
-        case ATYPE_SHOT:   return &shot_spr;
+        case ATYPE_SHOT:   return &enemy_spr;  // shots share enemy sprite sheet
         case ATYPE_NPC:    return &npc_spr;
         default:           return &enemy_spr;
     }

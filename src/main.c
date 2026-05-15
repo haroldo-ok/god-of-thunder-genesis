@@ -496,7 +496,8 @@ void game_loop(void) {
 }
 
 // ─── SGDK entry point ─────────────────────────────────────────────────────────
-int main(void) {
+bool main(bool hardReset) {
+    (void)hardReset;
     game_init();
     game_loop();
     // After game ends: show title screen / loop

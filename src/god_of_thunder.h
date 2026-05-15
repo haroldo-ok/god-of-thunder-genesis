@@ -457,6 +457,11 @@ void execute_script(s32 index);
 s16  boss1_movement(ACTOR *actr);
 void check_boss1_hit(ACTOR *actr, s16 x1, s16 y1, s16 x2, s16 y2, s16 i);
 
+// movpat.c / object.c internal helpers called from shtmov.c
+s16  check_move3(s16 x, s16 y, ACTOR *actr);
+s16  check_move4(s16 x, s16 y, ACTOR *actr);
+s16  _drop_obj(ACTOR *actr, s16 o);
+
 // back.c extras
 void kill_enemies(s16 ix, s16 iy);
 void remove_objects(s16 y, s16 x);

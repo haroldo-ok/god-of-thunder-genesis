@@ -14,11 +14,8 @@
 
 // ─── Extra globals referenced from init ──────────────────────────────────────
 u8   end_tile   = 0;
-u8   diag       = 0;
-u8   diag_flag  = 0;
 u8   thor_special_flag = 0;
 u8   auto_load  = 0;
-u8   warp_scroll = 0;
 s16  last_oracle = 0;
 u8   magic_cnt   = 0;
 s16  thor_real_y1 = 0;

@@ -60,7 +60,7 @@ void draw_obj_tile(s16 col, s16 row, u8 tile_idx) {
 }
 
 // ─── Drop object on ground (called when enemy dies) ───────────────────────────
-static s16 _drop_obj(ACTOR *actr, s16 o) {
+s16 _drop_obj(ACTOR *actr, s16 o) {
     s16 x, y, p;
     p = (actr->x + (actr->size_x / 2)) / 16 +
         (((actr->y + (actr->size_y / 2)) / 16) * 20);

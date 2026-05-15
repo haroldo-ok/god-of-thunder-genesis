@@ -30,8 +30,8 @@ extern s16 (*dialog_func[])(ACTOR *actr);
 static s16 check_move0(s16 x, s16 y, ACTOR *actr);
 static s16 check_move1(s16 x, s16 y, ACTOR *actr);
 static s16 check_move2(s16 x, s16 y, ACTOR *actr);
-static s16 check_move3(s16 x, s16 y, ACTOR *actr);
-static s16 check_move4(s16 x, s16 y, ACTOR *actr);
+s16 check_move3(s16 x, s16 y, ACTOR *actr);
+s16 check_move4(s16 x, s16 y, ACTOR *actr);
 
 // Forward declarations (needed for cross-calls between movement functions)
 static s16 check_special_move1(s16 x, s16 y, ACTOR *actr);
@@ -1830,15 +1830,7 @@ s16 movement_twentyseven(ACTOR *actr){         //
 return movement_one(actr);
 }
 //===========================================================================
-void set_thor_vars(void){
 
-thor_x1=thor->x+1;
-thor_y1=thor->y+8;
-thor_real_y1=thor->y;
-if(thor->dir>1) thor_x2=(thor->x+12);
-else thor_x2=(thor->x+12);
-thor_y2=thor->y+15;
-}
 //===========================================================================
 s16 movement_twentyeight(ACTOR *actr){         //fish
 s16 d,x1,y1,ret;
