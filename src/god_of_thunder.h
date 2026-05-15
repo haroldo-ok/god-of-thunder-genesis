@@ -1,0 +1,493 @@
+// God of Thunder - Sega Genesis Port
+// god_of_thunder.h - Core definitions, structs, and global declarations
+//
+// Ported from MS-DOS source (1_define.h / 1_proto.h)
+// Key changes from DOS original:
+//   - Removed: far/huge/near pointers (flat 32-bit 68000 address space)
+//   - Removed: MASK_IMAGE / ALIGNED_MASK_IMAGE (VDP handles rendering)
+//   - Removed: VGA page constants (PAGE0/1/2/3) — VDP manages display
+//   - Removed: DOS I/O port macros (sc_Index, crtc_Index, etc.)
+//   - Changed: int -> s16 where 16-bit behavior is required
+//   - Changed: char -> s8/u8 explicitly
+//   - Added:   Sprite* handle in ACTOR for SGDK VDP sprite
+//   - Timing:  game logic runs every 3rd VBlank (~20 Hz, original ~18 Hz)
+
+#ifndef GOD_OF_THUNDER_H
+#define GOD_OF_THUNDER_H
+
+#include <genesis.h>
+#include "actor_ids.h"
+#include "actor_data.h"
+#include "palette_gen.h"
+
+// ─── Screen / world geometry ──────────────────────────────────────────────────
+#define SCREEN_W        320
+#define SCREEN_H        224     // Genesis: 224 active lines (vs 200 on DOS)
+#define PLAY_W          320
+#define PLAY_H          192     // gameplay area (12 × 16-px tile rows)
+#define HUD_Y           192     // HUD starts at this Y (bottom 32 lines)
+#define TILE_W          16
+#define TILE_H          16
+#define LEVEL_COLS      20
+#define LEVEL_ROWS      12
+
+// ─── Game constants (unchanged from DOS) ──────────────────────────────────────
+#define MAX_ACTORS      35
+#define MAX_ENEMIES     16
+#define MAX_SHOTS       16
+#define STAMINA         20      // invulnerability frames after being hit
+#define NUM_SOUNDS      19
+#define NUM_OBJECTS     32
+#define DEMO_LEN        3600
+
+// ─── Actor type codes ──────────────────────────────────────────────────────────
+#define ATYPE_THOR      0
+#define ATYPE_HAMMER    1
+#define ATYPE_ENEMY     2
+#define ATYPE_SHOT      3
+#define ATYPE_NPC       4
+
+// ─── Direction constants ───────────────────────────────────────────────────────
+#define DIR_UP          0
+#define DIR_DOWN        1
+#define DIR_LEFT        2
+#define DIR_RIGHT       3
+
+// ─── Magic item flags ──────────────────────────────────────────────────────────
+#define APPLE_MAGIC     1
+#define HOURGLASS_MAGIC 2
+#define LIGHTNING_MAGIC 4
+#define BOOTS_MAGIC     8
+#define BOMB_MAGIC      16
+#define WIND_MAGIC      32
+#define QUESTION_MAGIC  64
+#define SHIELD_MAGIC    128
+#define THUNDER_MAGIC   256
+
+// ─── Boss level indices ────────────────────────────────────────────────────────
+#define BOSS_LEVEL1     59
+#define BOSS_LEVEL21    200
+#define BOSS_LEVEL22    118
+
+// ─── Sound IDs (index into sfx table) ─────────────────────────────────────────
+#define OW              0
+#define GULP            1
+#define SWISH           2
+#define YAH             3
+#define ELECTRIC        4
+#define THUNDER_SND     5
+#define DOOR_SND        6
+#define FALL_SND        7
+#define ANGEL_SND       8
+#define WOOP            9
+#define BRAAPP          11
+#define WIND_SND        12
+#define PUNCH1          13
+#define CLANG           14
+#define EXPLODE_SND     15
+#define DEAD            16
+#define BOSS11          16
+#define BOSS12          17
+#define BOSS13          18
+
+// ─── Timing ───────────────────────────────────────────────────────────────────
+// Genesis runs at 60 fps. Original game ticked at ~18 Hz.
+// We run game logic every 3rd frame = 20 Hz (close enough).
+#define TICKS_PER_LOGIC 3
+
+// ─── Actor struct (trimmed from DOS 256-byte version) ─────────────────────────
+// Removed: MASK_IMAGE pic[4][4]  (DOS VGA blitter data, ~200 bytes)
+//          far pointer fields, unused future[] padding
+// Added:   Sprite* spr           (SGDK VDP sprite handle)
+typedef struct {
+    // --- persistent data (loaded from level / actor table) ---
+    s8   move;              // movement pattern (0=none)
+    u8   width;             // physical collision width
+    u8   height;            // physical collision height
+    u8   directions;        // 1, 2, or 4
+    u8   frames;            // frames per direction
+    u8   frame_speed;       // ticks per frame change
+    u8   frame_sequence[4]; // animation sequence
+    u8   speed;             // move every Nth tick
+    s8   size_x;            // non-physical x padding
+    s8   size_y;            // non-physical y padding
+    s8   strength;          // damage dealt to Thor (255=instant kill)
+    u8   health;            // current HP
+    u8   num_moves;         // moves per speed tick
+    u8   shot_type;         // actor# of projectile (1-based)
+    u8   shot_pattern;      // which shot_pattern_func[] to use
+    u8   shots_allowed;     // max simultaneous shots on screen
+    u8   solid;             // 1=blocks movement (low 7 bits); bit7=special
+    u8   flying;            // 1=ignores ground tiles
+    u8   rating;            // rnd(100)<rating → drop jewel on death
+    u8   type;              // ATYPE_*
+    char name[9];           // actor name (debug/dialog)
+    u8   func_num;          // special function on touch
+    u8   func_pass;         // value passed to func
+    u16  magic_hurts;       // bitmask: which magic types damage this actor
+
+    // --- dynamic runtime state ---
+    u8   frame_count;       // countdown to next frame change
+    u8   dir;               // current facing direction (DIR_*)
+    u8   last_dir;          // previous direction
+    s16  x;                 // screen X position (pixels)
+    s16  y;                 // screen Y position (pixels)
+    s16  center;            // center tile index (x + y*20)
+    s8   center_x;          // center tile column
+    s8   center_y;          // center tile row
+    s16  last_x[2];         // previous X positions (double-buffer)
+    s16  last_y[2];         // previous Y positions
+    u8   used;              // 1=active and visible
+    u8   next;              // next animation frame index
+    u8   speed_count;       // countdown to next movement step
+    u8   vunerable;         // invulnerability countdown (STAMINA after hit)
+    u8   shot_cnt;          // cooldown after shooting
+    u8   num_shots;         // shots currently on screen from this actor
+    u8   creator;           // actor_num of the actor that spawned this shot
+    u8   pause;             // non-zero = skip movement this tick
+    u8   actor_num;         // index in actor[] array
+    u8   move_count;        // remaining moves this tick
+    u8   dead;              // 0=alive, 1=dying, 2=dead (will be freed)
+    u8   toggle;
+    u8   show;              // blink countdown: 0=always show
+    u8   temp1, temp2, temp3, temp4, temp5, temp6;
+    u8   counter;
+    u8   move_counter;
+    u8   edge_counter;
+    u8   hit_thor;          // set when this actor has touched Thor this tick
+    s16  rand;              // per-actor random value
+    u8   init_dir;
+    u8   pass_value;
+    u8   shot_actor;        // actor_num of the shot this actor fired
+    u8   magic_hit;
+    s16  i1,i2,i3,i4,i5,i6;
+    u8   init_health;       // HP at spawn (for scoring on death)
+    u8   talk_counter;
+    u8   etype;
+
+    // --- Genesis-specific ---
+    Sprite *spr;            // SGDK VDP hardware sprite (NULL if unused)
+} ACTOR;
+
+// ─── Thor persistent info (survives level transitions) ────────────────────────
+typedef struct {
+    u8   magic;             // current magic points (0-150)
+    u8   keys;              // key count
+    s16  jewels;            // jewel count (0-999)
+    u8   last_area;
+    u8   last_screen;       // level number of last checkpoint
+    u8   last_icon;         // tile index (x + y*20) of last checkpoint
+    u8   last_dir;
+    s16  inventory;         // bitmask of magic items owned
+    u8   item;              // currently selected magic item slot
+    u8   last_health;       // HP at last checkpoint
+    u8   last_magic;
+    s16  last_jewels;
+    u8   last_keys;
+    u8   last_item;
+    s16  last_inventory;
+    u8   level;             // episode (1, 2, 3)
+    s32  score;
+    s32  last_score;
+    u8   object;            // carried object index
+    const char *object_name;
+    u8   last_object;
+    const char *last_object_name;
+    u8   armor;
+} THOR_INFO;
+
+// ─── Game setup / options ─────────────────────────────────────────────────────
+// DOS original used a 64-bit bitfield for level completion flags.
+// On Genesis we use a plain u64 (two u32s) — same semantics.
+typedef struct {
+    u32  flags_lo;          // level completion flags 0-31  (was f00-f31)
+    u32  flags_hi;          // level completion flags 32-63 (was f32-f63)
+    u8   value[16];         // misc persistent values
+    u8   game;
+    u8   area;              // current episode (1, 2, 3)
+    u8   music;             // 1=enabled
+    u8   sound;             // 1=sfx enabled
+    u8   scroll_flag;       // 1=scrolling level transitions
+    u8   boss_dead[3];      // boss defeated flags per episode
+    u8   skill;             // 0=easy, 1=normal, 2=hard
+    u8   game_over;
+} SETUP;
+
+// Helper macros for setup flag bits (replaces DOS bitfield f00..f63)
+#define SETUP_GET_FLAG(s,n) ( (n)<32 ? (((s).flags_lo>>( n    ))&1) \
+                                     : (((s).flags_hi>>((n)-32))&1) )
+#define SETUP_SET_FLAG(s,n) do { if((n)<32) (s).flags_lo|=(1u<<(n)); \
+                                 else (s).flags_hi|=(1u<<((n)-32)); } while(0)
+#define SETUP_CLR_FLAG(s,n) do { if((n)<32) (s).flags_lo&=~(1u<<(n)); \
+                                 else (s).flags_hi&=~(1u<<((n)-32)); } while(0)
+
+// Frequently-used setup flags (matching DOS f00-f63 indices)
+#define HERMIT_HAS_DOLL     SETUP_GET_FLAG(setup, 4)
+
+// ─── Level data (ROM-resident, loaded per level) ───────────────────────────────
+// Matches the original LEVEL struct exactly — safe to memcpy from ROM array.
+#define LEVEL_MAX_ACTOR      16
+#define LEVEL_MAX_PAL         3
+#define LEVEL_MAX_STATIC_OBJ 30
+#define LEVEL_MAX_NEW_LEVEL  10
+
+typedef struct {
+    u8  icon[LEVEL_ROWS][LEVEL_COLS];       // tile indices (0 = empty)
+    u8  bg_color;                           // background fill tile index
+    u8  type;                               // music track
+    u8  actor_type[LEVEL_MAX_ACTOR];        // enemy actor IDs (1-based)
+    u8  actor_loc[LEVEL_MAX_ACTOR];         // spawn tile index
+    u8  actor_value[LEVEL_MAX_ACTOR];       // pass_value for each actor
+    u8  pal_colors[LEVEL_MAX_PAL];          // palette swap entries
+    u8  actor_invis[LEVEL_MAX_ACTOR];       // 1=spawns invisible
+    u8  extra[13];
+    u8  static_obj[LEVEL_MAX_STATIC_OBJ];  // pickup object type (1-based)
+    s16 static_x[LEVEL_MAX_STATIC_OBJ];    // pickup X tile position
+    s16 static_y[LEVEL_MAX_STATIC_OBJ];    // pickup Y tile position
+    u8  new_level[LEVEL_MAX_NEW_LEVEL];     // level index for exit icons
+    u8  new_level_loc[LEVEL_MAX_NEW_LEVEL]; // entry tile index in new level
+    u8  area;
+    u8  actor_dir[LEVEL_MAX_ACTOR];         // initial direction
+    u8  future[3];
+} LEVEL;
+
+// ─── Level data ROM arrays (defined in level_data.c, built from SDAT1-3) ──────
+extern const u8 level_data_ep1[];   // Episode 1: 120 levels × 512 bytes
+extern const u8 level_data_ep2[];
+extern const u8 level_data_ep3[];
+
+static inline const LEVEL *get_level_ptr(u8 ep, u8 level_num) {
+    const u8 *base;
+    if      (ep == 1) base = level_data_ep1;
+    else if (ep == 2) base = level_data_ep2;
+    else              base = level_data_ep3;
+    return (const LEVEL *)(base + (u32)level_num * 512);
+}
+
+// ─── Global game state (defined in main.c) ────────────────────────────────────
+extern ACTOR  actor[MAX_ACTORS];    // actor[0]=Thor, [1]=Hammer, [2]=Shield, [3+]=enemies/shots
+extern ACTOR  shot[MAX_ENEMIES];    // shot template array (copied into actor[] when fired)
+extern ACTOR  enemy[MAX_ENEMIES];   // enemy template array
+extern ACTOR  explosion;
+extern ACTOR  sparkle;
+extern ACTOR *thor;                 // pointer to actor[0]
+extern ACTOR *hammer;               // pointer to actor[1]
+
+extern THOR_INFO  thor_info;
+extern SETUP      setup;
+extern LEVEL      scrn;             // current level data (RAM copy for mutation)
+
+extern s16   current_level;
+extern s16   new_level;
+extern s16   new_level_tile;
+extern u8    current_area;
+
+extern u8    exit_flag;             // 0=running, 1=exit, 2=thor dies, 5=demo end
+extern u8    boss_dead;
+extern u8    boss_active;
+extern u8    game_over;
+
+extern s16   thor_x1, thor_y1, thor_x2, thor_y2;
+extern s16   thor_pos;              // thor's tile index (x/16 + y/16*20)
+extern s16   max_shot;
+
+extern u8    hourglass_flag;
+extern u8    thunder_flag;
+extern u8    shield_on;
+extern u8    lightning_used;
+extern u8    tornado_used;
+extern u8    apple_flag;
+extern u8    bomb_flag;
+extern u8    switch_flag;
+extern u8    shot_ok;
+extern u8    level_type;
+extern s16   restore_screen;
+extern u8    warp_flag;
+extern u8    warp_scroll;
+extern u8    startup;
+extern u8    cheat;
+extern u8    area;
+
+extern u8    object_map[240];       // tile-indexed pickup presence map
+extern u8    object_index[240];     // tile-indexed index into scrn.static_obj
+extern s16   ox, oy;                // position of last picked-up object (for redraw)
+extern u8    of;                    // 1=redraw tile at (ox,oy)
+
+extern s16   rand1, rand2;          // per-frame random values
+
+// Inform flags (one-shot tutorial messages)
+extern u8    cash1_inform, cash2_inform;
+extern u8    door_inform, magic_inform, carry_inform;
+extern u8    killgg_inform;
+extern u8    last_setup[32];
+
+// ─── Function pointer tables (defined in movpat.c / shtmov.c / shtpat.c) ─────
+extern s16 (*movement_func[])(ACTOR *actr);
+extern s16 (*shot_movement_func[])(ACTOR *actr);
+extern s16 (*shot_pattern_func[])(ACTOR *actr);
+
+// ─── Function prototypes ──────────────────────────────────────────────────────
+
+// main.c
+void game_init(void);
+void game_loop(void);
+void thor_dies(void);
+void thor_spins(s16 flag);
+void setup_load(void);
+s16  rnd(s16 max);
+void add_score(s32 delta);
+void add_magic(s16 amount);
+void add_jewels(s16 amount);
+void set_thor_vars(void);
+void game_pause(s16 delay_ticks);
+
+// back.c  (level rendering & transitions)
+void build_screen(void);
+void show_level(s16 new_lev);
+void show_objects(s16 level_num);
+void show_enemies(void);
+void scroll_level_left(void);
+void scroll_level_right(void);
+void scroll_level_up(void);
+void scroll_level_down(void);
+void phase_level(void);
+void fade_in(void);
+void fade_out(void);
+void switch_icons(void);
+void rotate_arrows(void);
+
+// move.c  (actor movement & collision)
+void move_actor(ACTOR *actr);
+void next_frame(ACTOR *actr);
+s16  overlap(s16 x1,s16 y1,s16 x2,s16 y2,s16 x3,s16 y3,s16 x4,s16 y4);
+s16  point_within(s16 x,s16 y,s16 x1,s16 y1,s16 x2,s16 y2);
+s16  reverse_direction(ACTOR *actr);
+void thor_shoots(void);
+void thor_damaged(ACTOR *actr);
+void actor_damaged(ACTOR *actr, s16 damage);
+void actor_destroyed(ACTOR *actr);
+s16  actor_shoots(ACTOR *actr, s16 dir);
+void actor_always_shoots(ACTOR *actr, s16 dir);
+s16  kill_good_guy(void);
+
+// image.c (sprite management)
+void init_sprites(void);
+void update_sprites(void);
+void load_actor_sprite(ACTOR *actr);
+void free_actor_sprite(ACTOR *actr);
+void actor_set_anim(ACTOR *actr);
+
+// back.c / panel / HUD
+void display_health(void);
+void display_magic(void);
+void display_jewels(void);
+void display_keys(void);
+void display_score(void);
+void display_item(void);
+void update_hud(void);
+void hud_init(void);
+
+// object.c
+void show_objects_sprites(s16 level_num);
+void pick_up_object(s16 tile_pos);
+void use_item(void);
+
+// sound.c
+void sound_init(void);
+void play_sound(s16 id, s16 priority);
+void music_play(s16 track, s16 restart);
+void music_pause(void);
+void music_resume(void);
+
+// script.c
+s16  odin_speaks(s16 msg_id, s16 flag);
+
+// dialog.c
+void show_dialog(const char *text, s16 color);
+
+// init.c
+s16  initialize(void);
+
+// file.c (SRAM save/load)
+s16  load_game(s16 prompt);
+void save_game(void);
+
+// boss files
+void boss_level1(void);
+void closing_sequence1(void);
+
+// Convenience: is tile solid (blocks movement)?
+// tile indices >= 140 are walkable; < 140 are walls/solid.
+// Flying actors use threshold 80 instead.
+static inline s16 tile_is_solid(u8 tile_idx) { return tile_idx < 140; }
+static inline s16 tile_is_solid_fly(u8 tile_idx) { return tile_idx < 80; }
+
+
+// ─── Additional globals (defined in globals.c) ───────────────────────────────
+extern u8   thor_icon1, thor_icon2, thor_icon3, thor_icon4;
+extern const u16 OBJ_TILE_VRAM_BASE_VAL;
+#define OBJ_TILE_VRAM_BASE  OBJ_TILE_VRAM_BASE_VAL
+
+// ─── Additional function declarations ────────────────────────────────────────
+s16  clamp_s16(s16 v, s16 lo, s16 hi);
+void printt(s16 val);
+void draw_obj_tile(s16 col, s16 row, u8 tile_idx);
+void setup_actor(ACTOR *actr, u8 num, u8 dir, s16 x, s16 y);
+s16  load_objects(void);
+void load_standard_actors(void);
+s16  setup_player(void);
+
+// Special tile handlers (sptile.c)
+s16  special_tile_thor(s16 x, s16 y, s16 icon);
+s16  special_tile(ACTOR *actr, s16 x, s16 y, s16 icon);
+
+// Dialog (dialog.c)
+void select_item(void);
+s16  option_menu(void);
+s16  ask_exit(void);
+void select_skill(void);
+void help(void);
+void select_fastmode(void);
+void select_music(void);
+s16  select_sound(void);
+s16  sound_playing(void);
+void d_restore(void);
+
+// Script (script.c)
+void execute_script(s32 index);
+s16  boss1_movement(ACTOR *actr);
+void check_boss1_hit(ACTOR *actr, s16 x1, s16 y1, s16 x2, s16 y2, s16 i);
+
+// back.c extras
+void kill_enemies(s16 ix, s16 iy);
+void remove_objects(s16 y, s16 x);
+s16  bgtile(s16 x, s16 y);
+s16  odin_speaks(s16 msg_id, s16 flag);
+s16  actor_speaks(ACTOR *actr, s16 index, s16 item);
+void draw_bg_tile(s16 col, s16 row, u8 tile_idx);
+void place_tile(s16 x, s16 y, u8 tile);
+
+// object.c extras
+s16  drop_object(ACTOR *actr);
+void add_health(s16 amount);
+void add_keys(s16 amount);
+void fill_score(s16 bonus);
+void delete_object(void);
+void not_enough_magic(void);
+void cannot_carry_more(void);
+
+// ACTOR runtime field aliases (DOS used last_x[0]/[1] for double-buffer)
+// On Genesis we keep them but only use [0]
+// (already in ACTOR struct as s16 last_x[2], last_y[2])
+
+// Extra globals
+extern u8   end_tile;
+extern u8   apple_drop;
+extern u8   diag;
+extern u8   story_flag;
+extern s16  thor_real_y1;
+extern u8   magic_cnt;
+extern ACTOR magic_item[2];
+
+
+#endif // GOD_OF_THUNDER_H
