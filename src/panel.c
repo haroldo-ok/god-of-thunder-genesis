@@ -11,7 +11,6 @@
 //   - Object icon displayed via a dedicated HUD sprite
 
 #include <genesis.h>
-#include <string.h>
 #include "god_of_thunder.h"
 
 // ─── HUD layout constants (in VDP tile rows/cols on WINDOW plane) ─────────────

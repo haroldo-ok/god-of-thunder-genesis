@@ -10,7 +10,6 @@
 // A simple checksum guards against corrupt saves.
 
 #include <genesis.h>
-#include <string.h>
 #include "god_of_thunder.h"
 
 // ─── Save data layout ─────────────────────────────────────────────────────────

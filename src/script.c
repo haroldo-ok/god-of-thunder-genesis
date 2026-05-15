@@ -17,8 +17,6 @@
 //   SETFLAG, PAUSE, VISIBLE, RANDOM
 
 #include <genesis.h>
-#include <stdlib.h>
-#include <string.h>
 #include "god_of_thunder.h"
 
 // ─── Script data (compiled from original TEXT + NPC scripts) ─────────────────

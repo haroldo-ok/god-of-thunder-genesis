@@ -5,7 +5,6 @@
 // with draw_bg_tile(). All gameplay semantics preserved exactly.
 
 #include <genesis.h>
-#include <string.h>
 #include "god_of_thunder.h"
 
 extern u8  diag;

@@ -4,7 +4,6 @@
 // Ported from 1_shtmov.c. Same transformations as movpat.c.
 
 #include <genesis.h>
-#include <string.h>
 #include "god_of_thunder.h"
 
 extern s16 thor_real_y1;

@@ -11,7 +11,6 @@
 //   - key_flag[key_magic] → JOY magic button read from input.c
 
 #include <genesis.h>
-#include <string.h>
 #include "god_of_thunder.h"
 
 // ─── Externals ────────────────────────────────────────────────────────────────

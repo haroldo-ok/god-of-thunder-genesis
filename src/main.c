@@ -12,7 +12,6 @@
 //   - Thunder VGA flicker effect → palette flash via PAL_setColor
 
 #include <genesis.h>
-#include <string.h>
 #include "god_of_thunder.h"
 
 // ─── Global game state ────────────────────────────────────────────────────────

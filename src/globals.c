@@ -4,7 +4,6 @@
 //             duplicate-definition linker errors.
 
 #include <genesis.h>
-#include <string.h>
 #include "god_of_thunder.h"
 
 // ─── Globals declared extern in god_of_thunder.h, defined here ───────────────

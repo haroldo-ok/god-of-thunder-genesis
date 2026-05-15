@@ -10,7 +10,6 @@
 //   - shot collision now calls free_actor_sprite() when destroying shots
 
 #include <genesis.h>
-#include <string.h>
 #include "god_of_thunder.h"
 
 // ─── External globals ─────────────────────────────────────────────────────────

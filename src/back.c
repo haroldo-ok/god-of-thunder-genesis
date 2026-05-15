@@ -11,7 +11,6 @@
 //   - Phase transition: random tile reveal using VDP tile writes
 
 #include <genesis.h>
-#include <string.h>
 #include "god_of_thunder.h"
 
 // ─── External globals from main.c ────────────────────────────────────────────
@@ -30,7 +29,6 @@ extern s16   last_oracle;
 //                     [2][3]
 
 #define BG_TILE_VRAM_BASE   1       // VRAM index of first bg tile's top-left sub-tile
-#define OBJ_TILE_VRAM_BASE  (BG_TILE_VRAM_BASE + 230*4)   // after bg tiles
 
 // The tileset resources (declared in resources.res, compiled by SGDK)
 extern const TileSet bg_tiles_ep1;
@@ -211,7 +209,7 @@ void show_level(s16 new_lev) {
     bomb_flag = 0;
 
     save_d = thor->dir;
-    if (scrn.icon[thor->center_y][thor->center_x] == 154) thor->dir = 0;
+    if (scrn.icon[(u8)thor->center_y][(u8)thor->center_x] == 154) thor->dir = 0;
 
     // Load new level data from ROM
     memcpy(&scrn, get_level_ptr(area, (u8)new_lev), sizeof(LEVEL));
@@ -224,7 +222,7 @@ void show_level(s16 new_lev) {
     show_objects(new_lev);
     show_enemies();
 
-    if (scrn.icon[thor->center_y][thor->center_x] == 154) thor->dir = 0;
+    if (scrn.icon[(u8)thor->center_y][(u8)thor->center_x] == 154) thor->dir = 0;
     actor_set_anim(thor);
     thor->dir = save_d;
 

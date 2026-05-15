@@ -6,8 +6,6 @@
 // Genesis uses VDP WINDOW plane text + VBlank waits.
 
 #include <genesis.h>
-#include <stdlib.h>
-#include <string.h>
 #include "god_of_thunder.h"
 
 // ─── Wait helpers ─────────────────────────────────────────────────────────────

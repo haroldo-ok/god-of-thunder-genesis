@@ -10,7 +10,6 @@
 //   - No LZSS buffer (SGDK decompresses resources at link time)
 
 #include <genesis.h>
-#include <string.h>
 #include "god_of_thunder.h"
 
 // ─── Extra globals referenced from init ──────────────────────────────────────

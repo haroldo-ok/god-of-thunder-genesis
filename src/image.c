@@ -20,7 +20,6 @@
 //   Animations = directions; frames per animation = frames.
 
 #include <genesis.h>
-#include <string.h>
 #include "god_of_thunder.h"
 
 // ─── SGDK sprite definitions (generated from resources.res) ──────────────────

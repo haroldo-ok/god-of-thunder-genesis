@@ -11,7 +11,6 @@
 //   - DOS inline assembly (asm mov dx,...) removed entirely
 
 #include <genesis.h>
-#include <string.h>
 #include "god_of_thunder.h"
 
 #define TILE_SOLID   80
