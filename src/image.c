@@ -87,7 +87,7 @@ void load_actor_sprite(ACTOR *actr) {
     actr->spr = SPR_addSprite(def,
                                actr->x,
                                actr->y,
-                               TILE_ATTR(pal, 1, 0, 0, 0));
+                               TILE_ATTR(pal, 1, 0, 0));
 
     if (actr->spr) {
         // For actors on the enemy/npc sheets: each actor occupies 16 SGDK

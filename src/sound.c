@@ -98,7 +98,7 @@ void sound_init(void) {
     s16 i;
     for (i = 0; i < NUM_SOUNDS; i++) {
         if (sfx_table[i].data) {
-            XGM_setPCM((u8)i, sfx_table[i].data, sfx_table[i].len);
+            SND_setPCM_XGM((u8)i, sfx_table[i].data, sfx_table[i].len);
         }
     }
     music_current = 255;
@@ -113,7 +113,7 @@ void play_sound(s16 id, s16 priority_override) {
     u8 pri = sound_priority[id];
     if (!priority_override && pri < current_priority) return;
     current_priority = pri;
-    XGM_startPlayPCM((u8)id, 1, SFX_CH_HI);
+    SND_startPlayPCM_XGM((u8)id, 1, SFX_CH_HI);
 }
 
 // ─── Music ───────────────────────────────────────────────────────────────────
@@ -124,19 +124,19 @@ void music_play(s16 track, s16 restart) {
     music_current = (u8)track;
     music_paused  = 0;
     if (music_tracks[track])
-        XGM_startPlay(music_tracks[track]);
+        SND_startPlay_XGM(music_tracks[track]);
 }
 
 void music_pause(void) {
     if (!music_paused) {
-        XGM_pausePlay();
+        SND_pausePlay_XGM();
         music_paused = 1;
     }
 }
 
 void music_resume(void) {
     if (music_paused) {
-        XGM_resumePlay();
+        SND_resumePlay_XGM();
         music_paused = 0;
     }
 }

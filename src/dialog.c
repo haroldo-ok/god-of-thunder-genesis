@@ -43,11 +43,11 @@ static void dialog_box_draw(void) {
     // Flood fill dialog area with dark bg (PAL3 slot 0 = transparent → use slot 2)
     for (r = DIALOG_ROW_START; r <= DIALOG_ROW_END; r++)
         for (c = DIALOG_COL_START; c <= DIALOG_COL_END; c++)
-            VDP_setTileMapXY(WINDOW, TILE_ATTR(PAL3, 0, 0, 0, 1), (u16)c, (u16)r);
+            VDP_setTileMapXY(WINDOW, TILE_ATTR_FULL(PAL3, 0, 0, 0, 1), (u16)c, (u16)r);
     // Draw border using tile 1 with a different palette slot
     for (c = DIALOG_COL_START; c <= DIALOG_COL_END; c++) {
-        VDP_setTileMapXY(WINDOW, TILE_ATTR(PAL1, 0, 0, 0, 1), (u16)c, (u16)DIALOG_ROW_START);
-        VDP_setTileMapXY(WINDOW, TILE_ATTR(PAL1, 0, 0, 0, 1), (u16)c, (u16)DIALOG_ROW_END);
+        VDP_setTileMapXY(WINDOW, TILE_ATTR_FULL(PAL1, 0, 0, 0, 1), (u16)c, (u16)DIALOG_ROW_START);
+        VDP_setTileMapXY(WINDOW, TILE_ATTR_FULL(PAL1, 0, 0, 0, 1), (u16)c, (u16)DIALOG_ROW_END);
     }
 }
 
@@ -55,7 +55,7 @@ static void dialog_box_clear(void) {
     s16 r, c;
     for (r = DIALOG_ROW_START; r <= DIALOG_ROW_END; r++)
         for (c = DIALOG_COL_START; c <= DIALOG_COL_END; c++)
-            VDP_setTileMapXY(WINDOW, TILE_ATTR(PAL0, 0, 0, 0, 0), (u16)c, (u16)r);
+            VDP_setTileMapXY(WINDOW, TILE_ATTR_FULL(PAL0, 0, 0, 0, 0), (u16)c, (u16)r);
 }
 
 // ─── show_dialog: print text with word-wrap into dialog box ──────────────────
@@ -252,7 +252,7 @@ void help(void) {
 void select_fastmode(void) { /* no-op on Genesis */ }
 void select_music(void)    { setup.music = !setup.music; }
 s16  select_sound(void)    { return 1; }
-s16  sound_playing(void)   { return XGM_isPlayingPCM(SOUND_PCM_CH_ALL); }
+s16  sound_playing(void)   { return SND_isPlayingPCM_XGM(SOUND_PCM_CH2); }
 
 // ─── d_restore: refresh display after dialog ─────────────────────────────────
 // DOS: redraws both VGA pages. Genesis: nothing needed (VDP is live).

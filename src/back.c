@@ -84,18 +84,18 @@ void draw_bg_tile(s16 col, s16 row, u8 tile_idx) {
 
     if (tile_idx == 0) {
         // Clear 2×2 cells to tile 0 (transparent/black)
-        VDP_setTileMapXY(BG_A, TILE_ATTR(PAL0, 0, 0, 0, 0), vdp_col,   vdp_row);
-        VDP_setTileMapXY(BG_A, TILE_ATTR(PAL0, 0, 0, 0, 0), vdp_col+1, vdp_row);
-        VDP_setTileMapXY(BG_A, TILE_ATTR(PAL0, 0, 0, 0, 0), vdp_col,   vdp_row+1);
-        VDP_setTileMapXY(BG_A, TILE_ATTR(PAL0, 0, 0, 0, 0), vdp_col+1, vdp_row+1);
+        VDP_setTileMapXY(BG_A, TILE_ATTR_FULL(PAL0, 0, 0, 0, 0), vdp_col,   vdp_row);
+        VDP_setTileMapXY(BG_A, TILE_ATTR_FULL(PAL0, 0, 0, 0, 0), vdp_col+1, vdp_row);
+        VDP_setTileMapXY(BG_A, TILE_ATTR_FULL(PAL0, 0, 0, 0, 0), vdp_col,   vdp_row+1);
+        VDP_setTileMapXY(BG_A, TILE_ATTR_FULL(PAL0, 0, 0, 0, 0), vdp_col+1, vdp_row+1);
         return;
     }
 
     u16 base = (u16)(BG_TILE_VRAM_BASE + (u32)tile_idx * 4);
-    VDP_setTileMapXY(BG_A, TILE_ATTR(PAL0, 0, 0, 0, base+0), vdp_col,   vdp_row);
-    VDP_setTileMapXY(BG_A, TILE_ATTR(PAL0, 0, 0, 0, base+1), vdp_col+1, vdp_row);
-    VDP_setTileMapXY(BG_A, TILE_ATTR(PAL0, 0, 0, 0, base+2), vdp_col,   vdp_row+1);
-    VDP_setTileMapXY(BG_A, TILE_ATTR(PAL0, 0, 0, 0, base+3), vdp_col+1, vdp_row+1);
+    VDP_setTileMapXY(BG_A, TILE_ATTR_FULL(PAL0, 0, 0, 0, base+0), vdp_col,   vdp_row);
+    VDP_setTileMapXY(BG_A, TILE_ATTR_FULL(PAL0, 0, 0, 0, base+1), vdp_col+1, vdp_row);
+    VDP_setTileMapXY(BG_A, TILE_ATTR_FULL(PAL0, 0, 0, 0, base+2), vdp_col,   vdp_row+1);
+    VDP_setTileMapXY(BG_A, TILE_ATTR_FULL(PAL0, 0, 0, 0, base+3), vdp_col+1, vdp_row+1);
 }
 
 // ─── build_screen ─────────────────────────────────────────────────────────────
@@ -108,7 +108,7 @@ void build_screen(void) {
     load_bg_tileset();
 
     // Clear play area to transparent first
-    VDP_fillTileMapRect(BG_A, TILE_ATTR(PAL0, 0, 0, 0, 0),
+    VDP_fillTileMapRect(BG_A, TILE_ATTR_FULL(PAL0, 0, 0, 0, 0),
                         0, 0, VDP_PLAY_COLS, VDP_PLAY_ROWS);
 
     for (y = 0; y < LEVEL_ROWS; y++) {
@@ -333,7 +333,7 @@ void phase_level(void) {
     // On Genesis: we flip each game tile from 'empty' to 'real' one by one.
 
     // First, blank the entire play area
-    VDP_fillTileMapRect(BG_A, TILE_ATTR(PAL0, 0, 0, 0, 0),
+    VDP_fillTileMapRect(BG_A, TILE_ATTR_FULL(PAL0, 0, 0, 0, 0),
                         0, 0, VDP_PLAY_COLS, VDP_PLAY_ROWS);
 
     while (cnt < 240) {
@@ -359,56 +359,32 @@ void phase_level(void) {
 
 // ─── Fade in/out ──────────────────────────────────────────────────────────────
 void fade_in(void) {
-    s16 step;
-    for (step = 0; step <= 7; step++) {
-        // Scale all palette entries from black toward full brightness
-        u16 pal[16];
-        s16 p;
-        for (p = 0; p < 16; p++) {
-            u16 c = got_pal_bg[p];
-            u8  r = (u8)((c & 0x7) * step / 7);
-            u8  g = (u8)(((c >> 4) & 0x7) * step / 7);
-            u8  b = (u8)(((c >> 8) & 0x7) * step / 7);
-            pal[p] = (u16)((b << 8) | (g << 4) | r);
-        }
-        PAL_setPalette(PAL0, pal, DMA);
-        // Also scale PAL1-3 in unison
-        for (p = 0; p < 16; p++) {
-            u16 c = got_pal_thor[p];
-            u8 r=(u8)((c&0x7)*step/7), g=(u8)(((c>>4)&0x7)*step/7), b=(u8)(((c>>8)&0x7)*step/7);
-            pal[p] = (u16)((b<<8)|(g<<4)|r);
-        }
-        PAL_setPalette(PAL1, pal, DMA);
-        for (p = 0; p < 16; p++) {
-            u16 c = got_pal_enemy[p];
-            u8 r=(u8)((c&0x7)*step/7), g=(u8)(((c>>4)&0x7)*step/7), b=(u8)(((c>>8)&0x7)*step/7);
-            pal[p] = (u16)((b<<8)|(g<<4)|r);
-        }
-        PAL_setPalette(PAL2, pal, DMA);
-        SYS_doVBlankProcess();
-    }
-    got_load_all_palettes();
+    // Build combined 64-entry palette (PAL0-3 = 4 * 16 colors)
+    u16 allpals[64];
+    s16 i;
+    for (i = 0; i < 16; i++) allpals[i]    = got_pal_bg[i];
+    for (i = 0; i < 16; i++) allpals[16+i] = got_pal_thor[i];
+    for (i = 0; i < 16; i++) allpals[32+i] = got_pal_enemy[i];
+    for (i = 0; i < 16; i++) allpals[48+i] = got_pal_npc[i];
+    // Fade in from black over 8 frames (sync = FALSE = async, returns immediately)
+    PAL_fadeInAll(allpals, 8, FALSE);
+    // Wait for fade to complete
+    SYS_doVBlankProcess();
+    SYS_doVBlankProcess();
+    SYS_doVBlankProcess();
+    SYS_doVBlankProcess();
+    SYS_doVBlankProcess();
+    SYS_doVBlankProcess();
+    SYS_doVBlankProcess();
+    SYS_doVBlankProcess();
 }
 
 void fade_out(void) {
-    s16 step;
-    for (step = 7; step >= 0; step--) {
-        u16 pal[16];
-        s16 p;
-        for (p = 0; p < 16; p++) {
-            u16 c = got_pal_bg[p];
-            u8 r=(u8)((c&0x7)*step/7), g=(u8)(((c>>4)&0x7)*step/7), b=(u8)(((c>>8)&0x7)*step/7);
-            pal[p] = (u16)((b<<8)|(g<<4)|r);
-        }
-        PAL_setPalette(PAL0, pal, DMA);
-        for (p = 0; p < 16; p++) {
-            u16 c = got_pal_thor[p];
-            u8 r=(u8)((c&0x7)*step/7), g=(u8)(((c>>4)&0x7)*step/7), b=(u8)(((c>>8)&0x7)*step/7);
-            pal[p] = (u16)((b<<8)|(g<<4)|r);
-        }
-        PAL_setPalette(PAL1, pal, DMA);
-        SYS_doVBlankProcess();
-    }
+    PAL_fadeOutAll(8, FALSE);
+    SYS_doVBlankProcess(); SYS_doVBlankProcess();
+    SYS_doVBlankProcess(); SYS_doVBlankProcess();
+    SYS_doVBlankProcess(); SYS_doVBlankProcess();
+    SYS_doVBlankProcess(); SYS_doVBlankProcess();
 }
 
 // ─── Tile manipulation (place_tile / switch_icons / rotate_arrows) ────────────

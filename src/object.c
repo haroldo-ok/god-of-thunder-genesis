@@ -54,10 +54,10 @@ void draw_obj_tile(s16 col, s16 row, u8 tile_idx) {
     u16 base  = (u16)(OBJ_TILE_VRAM_BASE + (u32)tile_idx * 4);
     u16 vcol  = (u16)(col * 2);
     u16 vrow  = (u16)(row * 2);
-    VDP_setTileMapXY(BG_A, TILE_ATTR(PAL0, 0, 0, 0, base+0), vcol,   vrow);
-    VDP_setTileMapXY(BG_A, TILE_ATTR(PAL0, 0, 0, 0, base+1), vcol+1, vrow);
-    VDP_setTileMapXY(BG_A, TILE_ATTR(PAL0, 0, 0, 0, base+2), vcol,   vrow+1);
-    VDP_setTileMapXY(BG_A, TILE_ATTR(PAL0, 0, 0, 0, base+3), vcol+1, vrow+1);
+    VDP_setTileMapXY(BG_A, TILE_ATTR_FULL(PAL0, 0, 0, 0, base+0), vcol,   vrow);
+    VDP_setTileMapXY(BG_A, TILE_ATTR_FULL(PAL0, 0, 0, 0, base+1), vcol+1, vrow);
+    VDP_setTileMapXY(BG_A, TILE_ATTR_FULL(PAL0, 0, 0, 0, base+2), vcol,   vrow+1);
+    VDP_setTileMapXY(BG_A, TILE_ATTR_FULL(PAL0, 0, 0, 0, base+3), vcol+1, vrow+1);
 }
 
 // ─── Drop object on ground (called when enemy dies) ───────────────────────────
