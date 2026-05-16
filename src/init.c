@@ -129,12 +129,14 @@ void load_standard_actors(void) {
     memset(&actor[0], 0, sizeof(ACTOR));
     copy_actor_nfo(&actor[0], thor_id);
     setup_actor(&actor[0], 0, DIR_DOWN, 100, 100);
+    actor_set_file_id(0, thor_id);
     thor = &actor[0];
 
     // Hammer (actor[1])
     memset(&actor[1], 0, sizeof(ACTOR));
     copy_actor_nfo(&actor[1], hammer_id);
     setup_actor(&actor[1], 1, DIR_DOWN, 100, 100);
+    actor_set_file_id(1, hammer_id);
     actor[1].used = 0;
     hammer = &actor[1];
 
@@ -146,12 +148,14 @@ void load_standard_actors(void) {
     memset(&sparkle, 0, sizeof(ACTOR));
     copy_actor_nfo(&sparkle, 106);
     setup_actor(&sparkle, 20, 0, 100, 100);
+    actor_set_file_id(20, 106);
     sparkle.used = 0;
 
     // Explosion (used as death VFX template for certain enemies)
     memset(&explosion, 0, sizeof(ACTOR));
     copy_actor_nfo(&explosion, 107);
     setup_actor(&explosion, 21, 0, 100, 100);
+    actor_set_file_id(21, 107);
     explosion.used = 0;
 
     // Tornado magic item template (actor[2] when tornado is active)
