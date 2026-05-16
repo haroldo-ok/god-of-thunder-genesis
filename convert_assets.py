@@ -35,14 +35,21 @@ TRANSPARENT_VGA    = 0    # kept for any remaining references
 
 # ── Genesis color conversion ──────────────────────────────────────────────────
 def rgb8_to_genesis(r, g, b):
-    """8-bit RGB → Genesis 9-bit BGR word (3 bits per channel)."""
-    return ((b >> 5) << 8) | ((g >> 5) << 4) | (r >> 5)
+    """8-bit RGB → Genesis VDP color word.
+    SGDK format: 0000_0BBB_0GGG_0RRR
+    Channels at bit positions: R=bits[3:1], G=bits[7:5], B=bits[11:9]
+    Equivalent to: RGB3_3_3_TO_VDPCOLOR(r3,g3,b3) = (r3<<1)|(g3<<5)|(b3<<9)
+    """
+    r3 = (r >> 5) & 7
+    g3 = (g >> 5) & 7
+    b3 = (b >> 5) & 7
+    return (b3 << 9) | (g3 << 5) | (r3 << 1)
 
 def genesis_to_rgb8(gc):
-    r3 = gc & 0x7
-    g3 = (gc >> 4) & 0x7
-    b3 = (gc >> 8) & 0x7
-    # Expand 3-bit to 8-bit: replicate upper bits into lower
+    """Genesis VDP color word → 8-bit RGB."""
+    r3 = (gc >> 1) & 0x7
+    g3 = (gc >> 5) & 0x7
+    b3 = (gc >> 9) & 0x7
     def e(v): return (v << 5) | (v << 2) | (v >> 1)
     return (e(r3), e(g3), e(b3))
 
@@ -197,21 +204,21 @@ pal3_pixels = collect_actor_pixels(npc_ids)
 # Grass green (0x0050) is the #1 most-used color but gets crowded out by
 # frequency-only selection - usage weighting correctly promotes it to rank 1.
 GEN_PAL0_COLORS = [
-    0x0050,  # #00b600 bright grass (most used tile in ep1)
-    0x0040,  # #009200 medium grass
-    0x0012,  # #492400 brown dirt
-    0x0020,  # #004900 dark green (tree shadows)
-    0x0011,  # #242400 dark brown/olive
-    0x0235,  # #b66d49 light brown
-    0x0246,  # #db9249 tan/sand
-    0x0030,  # #006d00 tree green
-    0x0122,  # #494924 olive
-    0x0630,  # #006ddb light blue water
-    0x0247,  # #ff9249 light tan
-    0x0700,  # #0000ff blue water
-    0x0024,  # #924900 dark brown
-    0x0037,  # #ff6d00 orange
-    0x0111,  # #242424 dark grey
+    0x00A0,  # #00b600 bright grass #07a700
+    0x0080,  # #009200 medium grass #009300
+    0x0024,  # #492400 brown dirt #492400
+    0x0040,  # #004900 dark green #004900
+    0x0022,  # #242400 dark brown/olive #242400
+    0x046A,  # #b66d49 light brown #b66d49
+    0x048C,  # #db9249 tan/sand #db9249
+    0x0060,  # #006d00 tree green #006d00
+    0x0244,  # #494924 olive #494924
+    0x0C60,  # #006ddb light blue water #006ddb
+    0x048E,  # #ff9249 light tan #ff9249
+    0x0E00,  # #0000ff blue water #0000ff
+    0x0048,  # #924900 dark brown #924900
+    0x006E,  # #ff6d00 orange #ff6d00
+    0x0222,  # #242424 dark grey #242424
 ]
 GEN_PAL1_COLORS = build_genesis_palette_for_colors(pal1_pixels, 15)
 GEN_PAL2_COLORS = build_genesis_palette_for_colors(pal2_pixels, 15)
