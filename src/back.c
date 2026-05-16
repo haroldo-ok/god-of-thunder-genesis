@@ -147,17 +147,16 @@ void show_enemies(void) {
         ACTOR *a = &actor[slot];
         memset(a, 0, sizeof(ACTOR));
 
-        // All fields already loaded by copy_actor_nfo() above
+        // Load ALL actor fields from binary ROM data (move, num_moves, dirs, frames, etc.)
+        copy_actor_nfo(a, atype);
+        // Register file_id so load_actor_sprite() can look up the correct sprite sheet block
+        actor_set_file_id((u8)slot, atype);
 
         // Apply level-specific overrides from LEVEL struct
         a->pass_value   = scrn.actor_value[i];
         a->init_dir     = scrn.actor_dir[i];
         a->dir          = scrn.actor_dir[i];
         a->last_dir     = scrn.actor_dir[i];
-
-        // Health/strength from actor template (via DOS shot/enemy arrays)
-        a->health       = 0;    // set by init.c from actor data
-        a->init_health  = 0;
 
         // Spawn position
         u8 loc = scrn.actor_loc[i];

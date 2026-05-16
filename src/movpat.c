@@ -543,6 +543,7 @@ if((hammer->used) && (hammer->move==5)){
   if(overlap(thor_x1,thor_y1,thor_x2,thor_y2,
              hammer->x,hammer->y,hammer->x+13,hammer->y+13)){
     actor_destroyed(hammer);
+    thor->shot_cnt = 0;  // can fire again immediately
   }
 }
 x=actr->x;

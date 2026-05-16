@@ -52,7 +52,7 @@ s16 reverse_direction(ACTOR *actr) {
 
 // ─── Thor throws hammer ───────────────────────────────────────────────────────
 void thor_shoots(void) {
-    if ((hammer->used != 1) && (!hammer->dead) && (!thor->shot_cnt)) {
+    if ((hammer->used != 1) && (!thor->shot_cnt)) {
         play_sound(SWISH, 0);
         thor->shot_cnt    = 20;
         hammer->used      = 1;
@@ -166,10 +166,11 @@ void actor_destroyed(ACTOR *actr) {
         // Spawn new sprite for explosion/sparkle
         load_actor_sprite(actr);
     } else {
-        // Thor or Hammer: just mark dead
+        // Hammer (slot 1) or Shield (slot 2): clear gracefully
         free_actor_sprite(actr);
-        actr->dead = 2;
+        actr->dead = 0;   // reset to 0 so hammer can be thrown again immediately
         actr->used = 0;
+        actr->move = 0;
     }
 }
 
