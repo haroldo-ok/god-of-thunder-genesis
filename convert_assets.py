@@ -29,7 +29,9 @@ with open(ASSETS_DIR / "PALETTE", "rb") as f:
     pal_raw = f.read()
 VGA_PALETTE = [(pal_raw[i*3], pal_raw[i*3+1], pal_raw[i*3+2]) for i in range(256)]
 
-TRANSPARENT_VGA = 0   # VGA index 0 maps to transparent in all sprites
+TRANSPARENT_VGA_0  = 0    # black - transparent in enemy/background tiles
+TRANSPARENT_VGA_15 = 15   # near-white - transparent in Thor/Hammer sprites
+TRANSPARENT_VGA    = 0    # kept for any remaining references
 
 # ── Genesis color conversion ──────────────────────────────────────────────────
 def rgb8_to_genesis(r, g, b):
@@ -57,7 +59,7 @@ def build_genesis_palette_for_colors(vga_indices: list, n_slots: int = 15) -> li
     # Count usage frequency in 9-bit Genesis space
     gen_counter = Counter()
     for idx in vga_indices:
-        if idx == TRANSPARENT_VGA:
+        if idx == TRANSPARENT_VGA_0 or idx == TRANSPARENT_VGA_15:
             continue
         r, g, b = VGA_PALETTE[idx]
         gc = rgb8_to_genesis(r, g, b)
@@ -72,7 +74,7 @@ def build_genesis_palette_for_colors(vga_indices: list, n_slots: int = 15) -> li
     remaining = list(gen_counter.items())  # (gc, count)
     remaining.sort(key=lambda x: -x[1])
 
-    MIN_DIST_SQ = 4  # minimum squared distance in 9-bit space to consider distinct
+    MIN_DIST_SQ = 1  # only skip exact duplicates; keep all perceptually distinct colors
 
     for gc, count in remaining:
         if len(selected) >= n_slots:
@@ -183,19 +185,34 @@ for ti in range(230):
     for plane in range(4):
         bg_pixels.extend(td[6 + plane * 64: 6 + (plane + 1) * 64])
 
-# Also add OBJECTS pixels to PAL0 (objects share bg tileset colors)
+# Objects tileset (loaded separately for PAL0 mapping)
 with open(ASSETS_DIR / "OBJECTS", "rb") as f:
     obj_raw = f.read()
-for ti in range(32):
-    td = obj_raw[ti * 262:(ti + 1) * 262]
-    for plane in range(4):
-        bg_pixels.extend(td[6 + plane * 64: 6 + (plane + 1) * 64])
 
 pal1_pixels = collect_actor_pixels(pal1_ids)
 pal2_pixels = collect_actor_pixels(enemy_ids + shot_ids)
 pal3_pixels = collect_actor_pixels(npc_ids)
 
-GEN_PAL0_COLORS = build_genesis_palette_for_colors(bg_pixels,   15)
+# PAL0: usage-weighted analysis of Episode 1 shows these 15 colors are optimal.
+# Grass green (0x0050) is the #1 most-used color but gets crowded out by
+# frequency-only selection - usage weighting correctly promotes it to rank 1.
+GEN_PAL0_COLORS = [
+    0x0050,  # #00b600 bright grass (most used tile in ep1)
+    0x0040,  # #009200 medium grass
+    0x0012,  # #492400 brown dirt
+    0x0020,  # #004900 dark green (tree shadows)
+    0x0011,  # #242400 dark brown/olive
+    0x0235,  # #b66d49 light brown
+    0x0246,  # #db9249 tan/sand
+    0x0030,  # #006d00 tree green
+    0x0122,  # #494924 olive
+    0x0630,  # #006ddb light blue water
+    0x0247,  # #ff9249 light tan
+    0x0700,  # #0000ff blue water
+    0x0024,  # #924900 dark brown
+    0x0037,  # #ff6d00 orange
+    0x0111,  # #242424 dark grey
+]
 GEN_PAL1_COLORS = build_genesis_palette_for_colors(pal1_pixels, 15)
 GEN_PAL2_COLORS = build_genesis_palette_for_colors(pal2_pixels, 15)
 GEN_PAL3_COLORS = build_genesis_palette_for_colors(pal3_pixels, 15)
@@ -227,8 +244,8 @@ def build_remap_lut(target_pal_rgb: list) -> list:
     """Returns list of 256 entries: VGA index → Genesis palette slot (0-15)."""
     lut = [0] * 256
     for vga_idx in range(256):
-        if vga_idx == TRANSPARENT_VGA:
-            lut[vga_idx] = 0  # transparent
+        if vga_idx == TRANSPARENT_VGA_0 or vga_idx == TRANSPARENT_VGA_15:
+            lut[vga_idx] = 0  # transparent (both black and near-white are bg in sprites)
             continue
         r, g, b = VGA_PALETTE[vga_idx]
         best_slot = 1
