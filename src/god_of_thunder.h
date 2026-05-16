@@ -434,6 +434,7 @@ void draw_obj_tile(s16 col, s16 row, u8 tile_idx);
 void setup_actor(ACTOR *actr, u8 num, u8 dir, s16 x, s16 y);
 s16  load_objects(void);
 void load_standard_actors(void);
+void copy_actor_nfo(ACTOR *actr, u8 actor_id);
 s16  setup_player(void);
 
 // Special tile handlers (sptile.c)

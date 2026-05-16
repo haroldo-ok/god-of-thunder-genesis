@@ -141,28 +141,13 @@ void show_enemies(void) {
         u8 atype = scrn.actor_type[i];
         if (atype == 0) continue;
 
-        const ACTOR_META *meta = actor_meta_get(atype);
-        if (!meta) continue;
-
         s16 slot = i + 3;   // slots 0=Thor, 1=Hammer, 2=Shield, 3+=enemies
         if (slot >= MAX_ACTORS) break;
 
         ACTOR *a = &actor[slot];
         memset(a, 0, sizeof(ACTOR));
 
-        // Copy metadata
-        a->width        = meta->width;
-        a->height       = meta->height;
-        a->directions   = meta->directions;
-        a->frames       = meta->frames;
-        a->frame_speed  = meta->frame_speed;
-        memcpy(a->frame_sequence, meta->frame_seq, 4);
-        a->speed        = meta->speed;
-        a->solid        = meta->solid;
-        a->shot_type    = meta->shot_type;
-        a->func_num     = meta->func_num;
-        a->func_pass    = meta->func_pass;
-        a->type         = meta->atype;
+        // All fields already loaded by copy_actor_nfo() above
 
         // Apply level-specific overrides from LEVEL struct
         a->pass_value   = scrn.actor_value[i];
@@ -183,13 +168,17 @@ void show_enemies(void) {
         a->last_x[0] = a->last_x[1] = a->x;
         a->last_y[0] = a->last_y[1] = a->y;
 
+        // setup_actor-equivalent for position/runtime state
+        a->next         = 0;
         a->frame_count  = a->frame_speed;
-        a->speed_count  = a->speed;
-        a->num_moves    = 1;
+        a->speed_count  = 8;    // same as setup_actor
         a->actor_num    = (u8)slot;
         a->used         = scrn.actor_invis[i] ? 0 : 1;
         a->vunerable    = 0;
         a->show         = 0;
+        a->move_counter = 0;
+        a->edge_counter = 20;
+        // num_moves already set from binary via copy_actor_nfo ✓
 
         // Spawn VDP hardware sprite
         load_actor_sprite(a);
