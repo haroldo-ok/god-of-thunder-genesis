@@ -457,16 +457,16 @@ with open(RES_DIR / "resources.res", "w") as f:
     f.write("// Background tilesets (230 tiles × 16×16 px, PAL0)\n")
     for ep in range(1, 4):
         if (ASSETS_DIR / f"BPICS{ep}").exists():
-            f.write(f'TILESET bg_tiles_ep{ep}  "res/bg_tiles_ep{ep}.png"  BEST 0\n')
-    f.write('\nTILESET obj_tiles  "res/objects.png"  BEST 0\n\n')
+            f.write(f'TILESET bg_tiles_ep{ep}  "bg_tiles_ep{ep}.png"  BEST 0\n')
+    f.write('\nTILESET obj_tiles  "objects.png"  BEST 0\n\n')
     f.write("// Sprites: 2×2 tiles = 16×16 px per frame\n")
-    f.write('SPRITE thor_spr    "res/thor.png"    2 2  BEST 0\n')
-    f.write('SPRITE hammer_spr  "res/hammer.png"  2 2  BEST 0\n')
-    f.write('SPRITE fx_spr      "res/fx.png"      2 2  BEST 0\n')
-    f.write('SPRITE enemy_spr   "res/enemies.png" 2 2  BEST 0\n')
-    f.write('SPRITE npc_spr     "res/npcs.png"    2 2  BEST 0\n')
+    f.write('SPRITE thor_spr    "thor.png"    2 2  BEST 0\n')
+    f.write('SPRITE hammer_spr  "hammer.png"  2 2  BEST 0\n')
+    f.write('SPRITE fx_spr      "fx.png"      2 2  BEST 0\n')
+    f.write('SPRITE enemy_spr   "enemies.png" 2 2  BEST 0\n')
+    f.write('SPRITE npc_spr     "npcs.png"    2 2  BEST 0\n')
     if (RES_DIR / "shots.png").exists():
-        f.write('SPRITE shot_spr    "res/shots.png"   2 2  BEST 0\n')
+        f.write('SPRITE shot_spr    "shots.png"   2 2  BEST 0\n')
 print("  res/resources.res")
 
 print("\n✓ Done — all assets regenerated with corrected palette.")
