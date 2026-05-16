@@ -22,7 +22,7 @@ u8   diag_flag  = 0;
 
 // OBJ_TILE_VRAM_BASE as a variable (back.c uses it as a #define referring to the
 // computed position; object.c also needs it as a runtime value)
-const u16 OBJ_TILE_VRAM_BASE_VAL = (u16)(1 + 230 * 4);  // after 230 bg tiles
+const u16 OBJ_TILE_VRAM_BASE_VAL = (u16)(436 + 230 * 4);  // 436 + 920 = 1356
 
 // ─── clamp_s16: missing from SGDK ────────────────────────────────────────────
 s16 clamp_s16(s16 v, s16 lo, s16 hi) {

@@ -28,7 +28,9 @@ extern s16   last_oracle;
 //   Sub-tile layout:  [0][1]
 //                     [2][3]
 
-#define BG_TILE_VRAM_BASE   1       // VRAM index of first bg tile's top-left sub-tile
+// Sprite engine (SPR_init) reserves 420 tiles from TILE_USERINDEX(16): slots 16..435
+// Background tiles must start AFTER the sprite pool to avoid VRAM collision.
+#define BG_TILE_VRAM_BASE   436     // first bg tile slot (after 420 sprite tiles)
 
 // The tileset resources (declared in resources.res, compiled by SGDK)
 extern const TileSet bg_tiles_ep1;

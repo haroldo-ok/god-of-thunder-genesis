@@ -29,18 +29,27 @@ with open(ASSETS_DIR / "PALETTE", "rb") as f:
     pal_raw = f.read()
 VGA_PALETTE = [(pal_raw[i*3], pal_raw[i*3+1], pal_raw[i*3+2]) for i in range(256)]
 
-TRANSPARENT_VGA = 0   # VGA index 0 maps to transparent in all sprites
+TRANSPARENT_VGA_0  = 0    # black - transparent in enemy/background tiles
+TRANSPARENT_VGA_15 = 15   # near-white - transparent in Thor/Hammer sprites
+TRANSPARENT_VGA    = 0    # kept for any remaining references
 
 # ── Genesis color conversion ──────────────────────────────────────────────────
 def rgb8_to_genesis(r, g, b):
-    """8-bit RGB → Genesis 9-bit BGR word (3 bits per channel)."""
-    return ((b >> 5) << 8) | ((g >> 5) << 4) | (r >> 5)
+    """8-bit RGB → Genesis VDP color word.
+    SGDK format: 0000_0BBB_0GGG_0RRR
+    Channels at bit positions: R=bits[3:1], G=bits[7:5], B=bits[11:9]
+    Equivalent to: RGB3_3_3_TO_VDPCOLOR(r3,g3,b3) = (r3<<1)|(g3<<5)|(b3<<9)
+    """
+    r3 = (r >> 5) & 7
+    g3 = (g >> 5) & 7
+    b3 = (b >> 5) & 7
+    return (b3 << 9) | (g3 << 5) | (r3 << 1)
 
 def genesis_to_rgb8(gc):
-    r3 = gc & 0x7
-    g3 = (gc >> 4) & 0x7
-    b3 = (gc >> 8) & 0x7
-    # Expand 3-bit to 8-bit: replicate upper bits into lower
+    """Genesis VDP color word → 8-bit RGB."""
+    r3 = (gc >> 1) & 0x7
+    g3 = (gc >> 5) & 0x7
+    b3 = (gc >> 9) & 0x7
     def e(v): return (v << 5) | (v << 2) | (v >> 1)
     return (e(r3), e(g3), e(b3))
 
@@ -57,7 +66,7 @@ def build_genesis_palette_for_colors(vga_indices: list, n_slots: int = 15) -> li
     # Count usage frequency in 9-bit Genesis space
     gen_counter = Counter()
     for idx in vga_indices:
-        if idx == TRANSPARENT_VGA:
+        if idx == TRANSPARENT_VGA_0 or idx == TRANSPARENT_VGA_15:
             continue
         r, g, b = VGA_PALETTE[idx]
         gc = rgb8_to_genesis(r, g, b)
@@ -72,7 +81,7 @@ def build_genesis_palette_for_colors(vga_indices: list, n_slots: int = 15) -> li
     remaining = list(gen_counter.items())  # (gc, count)
     remaining.sort(key=lambda x: -x[1])
 
-    MIN_DIST_SQ = 4  # minimum squared distance in 9-bit space to consider distinct
+    MIN_DIST_SQ = 1  # only skip exact duplicates; keep all perceptually distinct colors
 
     for gc, count in remaining:
         if len(selected) >= n_slots:
@@ -183,19 +192,34 @@ for ti in range(230):
     for plane in range(4):
         bg_pixels.extend(td[6 + plane * 64: 6 + (plane + 1) * 64])
 
-# Also add OBJECTS pixels to PAL0 (objects share bg tileset colors)
+# Objects tileset (loaded separately for PAL0 mapping)
 with open(ASSETS_DIR / "OBJECTS", "rb") as f:
     obj_raw = f.read()
-for ti in range(32):
-    td = obj_raw[ti * 262:(ti + 1) * 262]
-    for plane in range(4):
-        bg_pixels.extend(td[6 + plane * 64: 6 + (plane + 1) * 64])
 
 pal1_pixels = collect_actor_pixels(pal1_ids)
 pal2_pixels = collect_actor_pixels(enemy_ids + shot_ids)
 pal3_pixels = collect_actor_pixels(npc_ids)
 
-GEN_PAL0_COLORS = build_genesis_palette_for_colors(bg_pixels,   15)
+# PAL0: usage-weighted analysis of Episode 1 shows these 15 colors are optimal.
+# Grass green (0x0050) is the #1 most-used color but gets crowded out by
+# frequency-only selection - usage weighting correctly promotes it to rank 1.
+GEN_PAL0_COLORS = [
+    0x00A0,  # #00b600 bright grass #07a700
+    0x0080,  # #009200 medium grass #009300
+    0x0024,  # #492400 brown dirt #492400
+    0x0040,  # #004900 dark green #004900
+    0x0022,  # #242400 dark brown/olive #242400
+    0x046A,  # #b66d49 light brown #b66d49
+    0x048C,  # #db9249 tan/sand #db9249
+    0x0060,  # #006d00 tree green #006d00
+    0x0244,  # #494924 olive #494924
+    0x0C60,  # #006ddb light blue water #006ddb
+    0x048E,  # #ff9249 light tan #ff9249
+    0x0E00,  # #0000ff blue water #0000ff
+    0x0048,  # #924900 dark brown #924900
+    0x006E,  # #ff6d00 orange #ff6d00
+    0x0222,  # #242424 dark grey #242424
+]
 GEN_PAL1_COLORS = build_genesis_palette_for_colors(pal1_pixels, 15)
 GEN_PAL2_COLORS = build_genesis_palette_for_colors(pal2_pixels, 15)
 GEN_PAL3_COLORS = build_genesis_palette_for_colors(pal3_pixels, 15)
@@ -227,8 +251,8 @@ def build_remap_lut(target_pal_rgb: list) -> list:
     """Returns list of 256 entries: VGA index → Genesis palette slot (0-15)."""
     lut = [0] * 256
     for vga_idx in range(256):
-        if vga_idx == TRANSPARENT_VGA:
-            lut[vga_idx] = 0  # transparent
+        if vga_idx == TRANSPARENT_VGA_0 or vga_idx == TRANSPARENT_VGA_15:
+            lut[vga_idx] = 0  # transparent (both black and near-white are bg in sprites)
             continue
         r, g, b = VGA_PALETTE[vga_idx]
         best_slot = 1
@@ -435,21 +459,28 @@ with open(INC_DIR / "actor_data.h", "w") as f:
 print("  inc/actor_data.h")
 
 # resources.res
+# NOTE: all file paths are relative to this file's own directory (res/).
+# Do NOT add "res/" prefix — rescomp resolves from the .res file location.
 with open(RES_DIR / "resources.res", "w") as f:
     f.write("// God of Thunder - SGDK 1.70 Resource Descriptor\n// Auto-generated\n\n")
-    f.write("// Background tilesets (230 tiles × 16×16 px, PAL0)\n")
+    f.write("// Binary level data (120 levels x 512 bytes each)\n")
+    for ep in range(1, 4):
+        f.write(f'BIN level_data_ep{ep}  "level_data_ep{ep}.bin"\n')
+    f.write("\n// Actor ROM data (114 x 5200 bytes, ID-indexed)\n")
+    f.write('BIN actor_rom_data  "actor_rom_data.bin"\n')
+    f.write("\n// Background tilesets (230 tiles x 16x16 px, PAL0)\n")
     for ep in range(1, 4):
         if (ASSETS_DIR / f"BPICS{ep}").exists():
-            f.write(f'TILESET bg_tiles_ep{ep}  "res/bg_tiles_ep{ep}.png"  BEST 0\n')
-    f.write('\nTILESET obj_tiles  "res/objects.png"  BEST 0\n\n')
-    f.write("// Sprites: 2×2 tiles = 16×16 px per frame\n")
-    f.write('SPRITE thor_spr    "res/thor.png"    2 2  BEST 0\n')
-    f.write('SPRITE hammer_spr  "res/hammer.png"  2 2  BEST 0\n')
-    f.write('SPRITE fx_spr      "res/fx.png"      2 2  BEST 0\n')
-    f.write('SPRITE enemy_spr   "res/enemies.png" 2 2  BEST 0\n')
-    f.write('SPRITE npc_spr     "res/npcs.png"    2 2  BEST 0\n')
+            f.write(f'TILESET bg_tiles_ep{ep}  "bg_tiles_ep{ep}.png"  BEST 0\n')
+    f.write('\nTILESET obj_tiles  "objects.png"  BEST 0\n\n')
+    f.write("// Sprites: 2x2 tiles = 16x16 px per frame\n")
+    f.write('SPRITE thor_spr    "thor.png"    2 2  BEST 0\n')
+    f.write('SPRITE hammer_spr  "hammer.png"  2 2  BEST 0\n')
+    f.write('SPRITE fx_spr      "fx.png"      2 2  BEST 0\n')
+    f.write('SPRITE enemy_spr   "enemies.png" 2 2  BEST 0\n')
+    f.write('SPRITE npc_spr     "npcs.png"    2 2  BEST 0\n')
     if (RES_DIR / "shots.png").exists():
-        f.write('SPRITE shot_spr    "res/shots.png"   2 2  BEST 0\n')
+        f.write('SPRITE shot_spr    "shots.png"   2 2  BEST 0\n')
 print("  res/resources.res")
 
 print("\n✓ Done — all assets regenerated with corrected palette.")
