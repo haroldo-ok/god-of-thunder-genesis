@@ -22,7 +22,8 @@ u8   diag_flag  = 0;
 
 // OBJ_TILE_VRAM_BASE as a variable (back.c uses it as a #define referring to the
 // computed position; object.c also needs it as a runtime value)
-const u16 OBJ_TILE_VRAM_BASE_VAL = (u16)(436 + 230 * 4);  // 436 + 920 = 1356
+// bg_tiles PNG is 256×240px = 32×30 VDP tiles = 960 VDP tile slots
+const u16 OBJ_TILE_VRAM_BASE_VAL = (u16)(436 + 960);  // = 1396
 
 // ─── clamp_s16: missing from SGDK ────────────────────────────────────────────
 s16 clamp_s16(s16 v, s16 lo, s16 hi) {
