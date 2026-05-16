@@ -71,17 +71,9 @@ u8    killgg_inform = 0;
 u8    last_setup[32];
 
 // ─── Internal timing state ────────────────────────────────────────────────────
-static volatile u8  vblank_flag    = 0;
-static          u8  logic_tick     = 0;
-static          u16 frame_counter  = 0;
+static u8  logic_tick    = 0;
+static u16 frame_counter = 0;
 
-// ─── VBlank callback ──────────────────────────────────────────────────────────
-// SGDK calls this from the VBlank interrupt.
-// SPR_update() submits the sprite table to the VDP DMA queue here.
-static void vblank_cb(void) {
-    vblank_flag = 1;
-    SPR_update();
-}
 
 // ─── Random number generator ──────────────────────────────────────────────────
 // Replaces DOS rand()/srand(); simple LCG sufficient for gameplay.
@@ -126,8 +118,8 @@ void set_thor_vars(void) {
 void game_pause(s16 delay_ticks) {
     s16 count = 0;
     while (count < delay_ticks) {
-        while (!vblank_flag);          // wait for VBlank
-        vblank_flag = 0;
+        SPR_update();
+        SYS_doVBlankProcess();
         if (++logic_tick >= TICKS_PER_LOGIC) {
             logic_tick = 0;
             count++;
@@ -239,8 +231,8 @@ void thor_spins(s16 flag) {
         if (shield_on) actor[2].used = 1;
 
         // Wait one logic tick
-        while (!vblank_flag);
-        vblank_flag = 0;
+        SPR_update();
+        SYS_doVBlankProcess();
     }
 }
 
@@ -323,8 +315,6 @@ void game_init(void) {
     // Initialise sprite engine (SGDK)
     SPR_init();
 
-    // Register VBlank callback
-    SYS_setVBlankCallback(vblank_cb);
 
     // Initialise subsystems
     sound_init();
@@ -350,9 +340,11 @@ void game_loop(void) {
     fade_in();
 
     while (1) {
-        // ── Wait for VBlank ───────────────────────────────────────────────
-        while (!vblank_flag);
-        vblank_flag = 0;
+        // ── Wait for VBlank, update input, flush DMA ─────────────────────
+        // SPR_update() queues sprite DMA, then SYS_doVBlankProcess() waits
+        // for VBlank and also updates JOY_readJoypad() state buffers.
+        SPR_update();
+        SYS_doVBlankProcess();
         frame_counter++;
 
         // ── Run logic every TICKS_PER_LOGIC frames (~20 Hz) ──────────────

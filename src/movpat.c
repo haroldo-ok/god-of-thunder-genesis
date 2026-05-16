@@ -111,7 +111,7 @@ s16 x1,x2,y1,y2;
 s16 x3,x4,y3,y4;
 s16 i,ti;
 ACTOR *act;
-char icn1,icn2,icn3,icn4;
+u8 icn1,icn2,icn3,icn4;
 
 thor_icon1=0;
 thor_icon2=0;
@@ -255,7 +255,7 @@ s16 check_move1(s16 x,s16 y, ACTOR *actr){   //check hammer move
 s16  x1,x2,y1,y2,i;
 s16  x3,y3,x4,y4;
 s16  icn,f;
-char icn1,icn2,icn3,icn4;
+u8 icn1,icn2,icn3,icn4;
 
 ACTOR *act;
 
@@ -325,7 +325,7 @@ s16 check_move2(s16 x,s16 y, ACTOR *actr){   //check enemy move
 s16 x1,x2,y1,y2,i;
 s16 x3,y3,x4,y4;
 s16 icn;
-char icn1,icn2,icn3,icn4;
+u8 icn1,icn2,icn3,icn4;
 
 ACTOR *act;
 
@@ -397,7 +397,7 @@ return 1;
 s16 check_move3(s16 x,s16 y, ACTOR *actr){   //check enemy shot move
 s16 x1,x2,y1,y2;
 s16 x3,x4,y3,y4,i;
-char icn1,icn2,icn3,icn4;
+u8 icn1,icn2,icn3,icn4;
 ACTOR *act;
 
 s16 icn;
@@ -543,6 +543,7 @@ if((hammer->used) && (hammer->move==5)){
   if(overlap(thor_x1,thor_y1,thor_x2,thor_y2,
              hammer->x,hammer->y,hammer->x+13,hammer->y+13)){
     actor_destroyed(hammer);
+    thor->shot_cnt = 0;  // can fire again immediately
   }
 }
 x=actr->x;
@@ -640,7 +641,7 @@ s16 check_special_move1(s16 x,s16 y, ACTOR *actr){
 s16 x1,x2,y1,y2,i;
 s16 x3,y3,x4,y4;
 s16 icn;
-char icn1,icn2,icn3,icn4;
+u8 icn1,icn2,icn3,icn4;
 
 ACTOR *act;
 

@@ -75,27 +75,48 @@ void setup_actor(ACTOR *actr, u8 num, u8 dir, s16 x, s16 y) {
 }
 
 // ─── Copy metadata from ROM actor NFO into an ACTOR struct ───────────────────
-static void copy_actor_nfo(ACTOR *actr, u8 actor_id) {
-    const ACTOR_META *meta = actor_meta_get(actor_id);
-    if (!meta) return;
-    actr->move         = 0;  // will be set by movement pattern system
-    actr->width        = meta->width;
-    actr->height       = meta->height;
-    actr->directions   = meta->directions;
-    actr->frames       = meta->frames;
-    actr->frame_speed  = meta->frame_speed;
-    memcpy(actr->frame_sequence, meta->frame_seq, 4);
-    actr->speed        = meta->speed;
-    actr->solid        = meta->solid;
-    actr->shot_type    = meta->shot_type;
-    actr->func_num     = meta->func_num;
-    actr->func_pass    = meta->func_pass;
-    actr->type         = meta->atype;
-    actr->init_health  = 50;   // sensible default; overridden per-level
-    actr->health       = 50;
-    actr->strength     = 5;
-    strncpy(actr->name, meta->name, 8);
-    actr->name[8] = 0;
+// ─── Copy metadata from ROM actor NFO into an ACTOR struct ───────────────────
+// Reads directly from actor_rom_data[] binary (packed ACTOR{n} files).
+// ACTOR_NFO is 40 bytes at offset 5120 in each 5200-byte ACTOR_DATA entry.
+// Layout matches ACTOR_NFO struct in utility/actornfo.h exactly.
+#define ACTOR_DATA_STRIDE  5200u
+#define ACTOR_NFO_OFF      5120u
+
+void copy_actor_nfo(ACTOR *actr, u8 actor_id) {
+    // Bounds check: valid IDs are 1-113
+    if (actor_id == 0 || actor_id >= 114) return;
+
+    const u8 *nfo = actor_rom_data + (u32)actor_id * ACTOR_DATA_STRIDE + ACTOR_NFO_OFF;
+
+    // Read all fields from the binary NFO (signed bytes cast to appropriate types)
+    actr->move          = (s8)nfo[0];
+    actr->width         = nfo[1] ? nfo[1] : 16;
+    actr->height        = nfo[2] ? nfo[2] : 16;
+    actr->directions    = nfo[3] ? nfo[3] : 1;
+    actr->frames        = nfo[4] ? nfo[4] : 1;
+    actr->frame_speed   = nfo[5] ? nfo[5] : 6;
+    actr->frame_sequence[0] = nfo[6];
+    actr->frame_sequence[1] = nfo[7];
+    actr->frame_sequence[2] = nfo[8];
+    actr->frame_sequence[3] = nfo[9];
+    actr->speed         = nfo[10] ? nfo[10] : 1;
+    actr->size_x        = (s8)nfo[11];
+    actr->size_y        = (s8)nfo[12];
+    actr->strength      = (s8)nfo[13];
+    actr->health        = nfo[14] ? nfo[14] : 50;
+    actr->num_moves     = nfo[15] ? nfo[15] : 1;  // CRITICAL: was always 0 before
+    actr->shot_type     = nfo[16];
+    actr->shot_pattern  = nfo[17];
+    actr->shots_allowed = nfo[18];
+    actr->solid         = nfo[19];
+    actr->flying        = nfo[20];
+    actr->rating        = nfo[21];
+    actr->type          = nfo[22];
+    memcpy(actr->name, nfo + 23, 8);
+    actr->name[8]       = 0;
+    actr->func_num      = nfo[32];
+    actr->func_pass     = nfo[33];
+    actr->init_health   = actr->health;
 }
 
 // ─── load_standard_actors: set up Thor, Hammer, sparkle, explosion, magic ────
@@ -108,12 +129,14 @@ void load_standard_actors(void) {
     memset(&actor[0], 0, sizeof(ACTOR));
     copy_actor_nfo(&actor[0], thor_id);
     setup_actor(&actor[0], 0, DIR_DOWN, 100, 100);
+    actor_set_file_id(0, thor_id);
     thor = &actor[0];
 
     // Hammer (actor[1])
     memset(&actor[1], 0, sizeof(ACTOR));
     copy_actor_nfo(&actor[1], hammer_id);
     setup_actor(&actor[1], 1, DIR_DOWN, 100, 100);
+    actor_set_file_id(1, hammer_id);
     actor[1].used = 0;
     hammer = &actor[1];
 
@@ -125,12 +148,14 @@ void load_standard_actors(void) {
     memset(&sparkle, 0, sizeof(ACTOR));
     copy_actor_nfo(&sparkle, 106);
     setup_actor(&sparkle, 20, 0, 100, 100);
+    actor_set_file_id(20, 106);
     sparkle.used = 0;
 
     // Explosion (used as death VFX template for certain enemies)
     memset(&explosion, 0, sizeof(ACTOR));
     copy_actor_nfo(&explosion, 107);
     setup_actor(&explosion, 21, 0, 100, 100);
+    actor_set_file_id(21, 107);
     explosion.used = 0;
 
     // Tornado magic item template (actor[2] when tornado is active)
