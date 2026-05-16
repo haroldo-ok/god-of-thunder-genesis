@@ -452,14 +452,21 @@ with open(INC_DIR / "actor_data.h", "w") as f:
 print("  inc/actor_data.h")
 
 # resources.res
+# NOTE: all file paths are relative to this file's own directory (res/).
+# Do NOT add "res/" prefix — rescomp resolves from the .res file location.
 with open(RES_DIR / "resources.res", "w") as f:
     f.write("// God of Thunder - SGDK 1.70 Resource Descriptor\n// Auto-generated\n\n")
-    f.write("// Background tilesets (230 tiles × 16×16 px, PAL0)\n")
+    f.write("// Binary level data (120 levels x 512 bytes each)\n")
+    for ep in range(1, 4):
+        f.write(f'BIN level_data_ep{ep}  "level_data_ep{ep}.bin"\n')
+    f.write("\n// Actor ROM data (114 x 5200 bytes, ID-indexed)\n")
+    f.write('BIN actor_rom_data  "actor_rom_data.bin"\n')
+    f.write("\n// Background tilesets (230 tiles x 16x16 px, PAL0)\n")
     for ep in range(1, 4):
         if (ASSETS_DIR / f"BPICS{ep}").exists():
             f.write(f'TILESET bg_tiles_ep{ep}  "bg_tiles_ep{ep}.png"  BEST 0\n')
     f.write('\nTILESET obj_tiles  "objects.png"  BEST 0\n\n')
-    f.write("// Sprites: 2×2 tiles = 16×16 px per frame\n")
+    f.write("// Sprites: 2x2 tiles = 16x16 px per frame\n")
     f.write('SPRITE thor_spr    "thor.png"    2 2  BEST 0\n')
     f.write('SPRITE hammer_spr  "hammer.png"  2 2  BEST 0\n')
     f.write('SPRITE fx_spr      "fx.png"      2 2  BEST 0\n')
