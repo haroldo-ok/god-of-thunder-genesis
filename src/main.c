@@ -311,6 +311,7 @@ void game_init(void) {
 
     // Load palettes
     got_load_all_palettes();
+    got_set_bg_transparent_color(176);  // default grass bg
 
     // Initialise sprite engine (SGDK)
     SPR_init();

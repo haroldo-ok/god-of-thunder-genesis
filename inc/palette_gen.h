@@ -95,4 +95,36 @@ static inline void got_load_all_palettes(void) {
     PAL_setPalette(PAL3, got_pal_npc,   DMA);
 }
 
+
+// ─── Background tile transparency fix ────────────────────────────────────────
+// On Genesis BG planes, palette slot 0 renders as a solid color (not transparent).
+// The original DOS blitter skipped 'transparent' pixels (VGA index 0), showing
+// the bg_color tile underneath. We replicate this by setting PAL0 slot 0 to match
+// the bg_color tile's dominant color before drawing each level.
+// This table maps bg_color tile index → which PAL0 slot holds its main color.
+static const u8 bg_tile_transparent_slot[230] = {
+    15,  2, 14,  7, 14, 12,  9,  7, 11, 11,  7, 15,  9, 14, 13,  9,
+     6,  7, 11, 11,  9,  6,  9,  9,  9,  9,  9,  9, 10, 10, 10, 10,
+    10, 10, 10, 10, 10, 10,  6,  8, 10, 10, 10,  7,  7,  9,  7, 15,
+    11, 11,  6, 11,  6, 11, 11, 11, 11, 11,  4,  1,  1,  1,  4,  4,
+     9,  4,  4,  4,  1,  7, 11,  1, 13,  6,  6,  6,  6,  6, 13, 13,
+    13,  7,  6,  7,  9,  6,  7,  7,  6,  7,  7,  7,  7, 11, 14, 13,
+    11, 11, 12, 12, 12, 10, 10, 10,  1, 10, 12, 10, 10, 10, 12, 12,
+    15, 12, 15, 12, 10,  1, 10,  5, 12, 10,  9, 13, 13,  9, 13,  9,
+     9, 13, 14, 13,  9,  9, 14, 13,  9,  9, 13,  5,  6,  6,  7,  7,
+    11,  7, 14,  7,  7,  7,  7, 14, 14, 14,  9, 14, 14, 14,  3,  3,
+     9,  9,  9,  9,  9, 11, 11, 11, 11, 11, 11, 11, 11,  6, 11,  1,
+     1,  2,  7,  7, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11,
+     8,  2,  8,  2,  8,  1,  8,  1, 11,  9,  7, 11, 11, 14,  3, 14,
+     3, 12, 13, 11, 11, 11,  0,  4,  0,  0,  6,  6, 15, 15, 15, 15,
+    15, 15, 15, 15,  9,  9,
+};
+
+// Call this after loading scrn.bg_color to make transparent bg-tile pixels
+// show the correct background fill color instead of black.
+static inline void got_set_bg_transparent_color(u8 bg_color_tile) {
+    u8 slot = (bg_color_tile < 230) ? bg_tile_transparent_slot[bg_color_tile] : 1;
+    PAL_setColor(0, got_pal_bg[slot]);
+}
+
 #endif // PALETTE_GEN_H

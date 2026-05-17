@@ -212,6 +212,9 @@ void show_level(s16 new_lev) {
     memcpy(&scrn, get_level_ptr(area, (u8)new_lev), sizeof(LEVEL));
     level_type = scrn.type;
 
+    // Set PAL0 slot 0 to match bg_color so transparent tile pixels show fill color
+    got_set_bg_transparent_color(scrn.bg_color);
+
     thor->next = 0;
 
     // Build the new level tilemap
