@@ -24,7 +24,7 @@ extern s16   last_oracle;
 // BG tile VRAM organisation (SGDK):
 //   VRAM index 1 = first background tile (tile 0 reserved = transparent)
 //   Each 16×16 game tile = 2×2 VDP 8×8 sub-tiles
-//   VRAM tile numbering: tile_vram_base + (game_tile_idx * 4) + sub (0-3)
+//   VRAM tile numbering: tile_vram_base + (row*64) + (col*2) + sub [+0,+1,+32,+33]
 //   Sub-tile layout:  [0][1]
 //                     [2][3]
 
@@ -91,11 +91,18 @@ void draw_bg_tile(s16 col, s16 row, u8 tile_idx) {
         return;
     }
 
-    u16 base = (u16)(BG_TILE_VRAM_BASE + (u32)tile_idx * 4);
-    VDP_setTileMapXY(BG_A, TILE_ATTR_FULL(PAL0, 0, 0, 0, base+0), vdp_col,   vdp_row);
-    VDP_setTileMapXY(BG_A, TILE_ATTR_FULL(PAL0, 0, 0, 0, base+1), vdp_col+1, vdp_row);
-    VDP_setTileMapXY(BG_A, TILE_ATTR_FULL(PAL0, 0, 0, 0, base+2), vdp_col,   vdp_row+1);
-    VDP_setTileMapXY(BG_A, TILE_ATTR_FULL(PAL0, 0, 0, 0, base+3), vdp_col+1, vdp_row+1);
+    // PNG sheet is 256px wide = 32 VDP-tiles wide. Game tiles are 16 per row,
+    // each occupying a 2×2 block of VDP tiles. VRAM layout:
+    //   base = BG_TILE_VRAM_BASE + (tile_idx/16)*64 + (tile_idx%16)*2
+    //   [TL=+0 ][TR=+1 ]
+    //   [BL=+32][BR=+33]
+    u16 base = (u16)(BG_TILE_VRAM_BASE
+                     + (u32)(tile_idx / 16) * 64
+                     + (u32)(tile_idx % 16) * 2);
+    VDP_setTileMapXY(BG_A, TILE_ATTR_FULL(PAL0, 0, 0, 0, base),    vdp_col,   vdp_row);
+    VDP_setTileMapXY(BG_A, TILE_ATTR_FULL(PAL0, 0, 0, 0, base+1),  vdp_col+1, vdp_row);
+    VDP_setTileMapXY(BG_A, TILE_ATTR_FULL(PAL0, 0, 0, 0, base+32), vdp_col,   vdp_row+1);
+    VDP_setTileMapXY(BG_A, TILE_ATTR_FULL(PAL0, 0, 0, 0, base+33), vdp_col+1, vdp_row+1);
 }
 
 // ─── build_screen ─────────────────────────────────────────────────────────────

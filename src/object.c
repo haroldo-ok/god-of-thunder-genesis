@@ -50,13 +50,18 @@ void show_objects(s16 level_num) {
 
 // Draw a single 16×16 object tile on BG_A (using OBJ_TILE_VRAM_BASE)
 void draw_obj_tile(s16 col, s16 row, u8 tile_idx) {
-    u16 base  = (u16)(OBJ_TILE_VRAM_BASE + (u32)tile_idx * 4);
-    u16 vcol  = (u16)(col * 2);
-    u16 vrow  = (u16)(row * 2);
-    VDP_setTileMapXY(BG_A, TILE_ATTR_FULL(PAL0, 0, 0, 0, base+0), vcol,   vrow);
-    VDP_setTileMapXY(BG_A, TILE_ATTR_FULL(PAL0, 0, 0, 0, base+1), vcol+1, vrow);
-    VDP_setTileMapXY(BG_A, TILE_ATTR_FULL(PAL0, 0, 0, 0, base+2), vcol,   vrow+1);
-    VDP_setTileMapXY(BG_A, TILE_ATTR_FULL(PAL0, 0, 0, 0, base+3), vcol+1, vrow+1);
+    // Objects PNG is 256px wide = 32 VDP-tiles wide, 16 objects per row.
+    // Same 2D VRAM formula as bg tiles: base + (idx/16)*64 + (idx%16)*2
+    // Sub-tile offsets: [TL=+0][TR=+1] / [BL=+32][BR=+33]
+    u16 base = (u16)(OBJ_TILE_VRAM_BASE
+                     + (u32)(tile_idx / 16) * 64
+                     + (u32)(tile_idx % 16) * 2);
+    u16 vcol = (u16)(col * 2);
+    u16 vrow = (u16)(row * 2);
+    VDP_setTileMapXY(BG_A, TILE_ATTR_FULL(PAL0, 0, 0, 0, base),    vcol,   vrow);
+    VDP_setTileMapXY(BG_A, TILE_ATTR_FULL(PAL0, 0, 0, 0, base+1),  vcol+1, vrow);
+    VDP_setTileMapXY(BG_A, TILE_ATTR_FULL(PAL0, 0, 0, 0, base+32), vcol,   vrow+1);
+    VDP_setTileMapXY(BG_A, TILE_ATTR_FULL(PAL0, 0, 0, 0, base+33), vcol+1, vrow+1);
 }
 
 // ─── Drop object on ground (called when enemy dies) ───────────────────────────
