@@ -10,8 +10,8 @@ const ROMHeader rom_header = {
     "SEGA MEGA DRIVE ",
 #endif
     "(C)SGDK 2026    ",
-    "GOD OF THUNDER 0.0.4                            ",
-    "GOD OF THUNDER 0.0.4                            ",
+    "GOD OF THUNDER 0.0.5                            ",
+    "GOD OF THUNDER 0.0.5                            ",
     "GM 00000000-00",
     0x000,
     "JD              ",
@@ -28,6 +28,6 @@ const ROMHeader rom_header = {
     0x00200000,
     0x0020FFFF,
     "            ",
-    "GOD OF THUNDER 0.0.4                    ",
+    "GOD OF THUNDER 0.0.5                    ",
     "JUE             "
 };
