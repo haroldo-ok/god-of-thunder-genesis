@@ -506,6 +506,7 @@ void cannot_carry_more(void);
 // Extra globals
 extern u8   end_tile;
 extern u8   apple_drop;
+extern u16  bg_transparent_color;  // current PAL0 slot 0 color (bg fill)
 extern u8   diag;
 extern u8   diag_flag;
 extern u8   thor_special_flag;

@@ -341,9 +341,7 @@ void game_loop(void) {
     exit_flag = 0;
     thor->speed_count = 6;
     music_play(level_type, 1);
-    fade_in();
-    // Re-apply transparent color after fade (fade_in reloads full palette from array)
-    got_set_bg_transparent_color(scrn.bg_color);
+    fade_in();  // restores PAL0[0] via bg_transparent_color at end
 
     while (1) {
         // ── Wait for VBlank, update input, flush DMA ─────────────────────

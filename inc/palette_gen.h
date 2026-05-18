@@ -9,8 +9,8 @@
 #include <genesis.h>
 
 // Background / environment tiles (BPICS)
-static u16 got_pal_bg[16] = {
-    0x0000,  /* #000000 - updated per level by got_set_bg_transparent_color */
+static const u16 got_pal_bg[16] = {
+    0x0000,  /* #000000 */
     0x00A0,  /* #00b600 */
     0x0080,  /* #009200 */
     0x0024,  /* #492400 */
@@ -122,10 +122,12 @@ static const u8 bg_tile_transparent_slot[230] = {
 
 // Call this after loading scrn.bg_color to make transparent bg-tile pixels
 // show the correct background fill color instead of black.
+extern u16 bg_transparent_color;  // defined in globals.c
+
 static inline void got_set_bg_transparent_color(u8 bg_color_tile) {
     u8 slot = (bg_color_tile < 230) ? bg_tile_transparent_slot[bg_color_tile] : 1;
-    // Update both the runtime palette AND the palette array so fade_in picks it up
-    got_pal_bg[0] = got_pal_bg[slot];
+    // Store the transparent color and apply it to hardware palette slot 0
+    bg_transparent_color = got_pal_bg[slot];
     PAL_setColor(0, got_pal_bg[slot]);
 }
 
