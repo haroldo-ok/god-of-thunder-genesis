@@ -9,24 +9,7 @@
 #include <genesis.h>
 
 // Background / environment tiles (BPICS)
-static const u16 got_pal_bg[16] = {
-    0x0000,  /* #000000 */
-    0x00A0,  /* #00b600 */
-    0x0080,  /* #009200 */
-    0x0024,  /* #492400 */
-    0x0040,  /* #004900 */
-    0x0022,  /* #242400 */
-    0x046A,  /* #b66d49 */
-    0x048C,  /* #db9249 */
-    0x0060,  /* #006d00 */
-    0x0244,  /* #494924 */
-    0x0C60,  /* #006ddb */
-    0x048E,  /* #ff9249 */
-    0x0E00,  /* #0000ff */
-    0x0048,  /* #924900 */
-    0x006E,  /* #ff6d00 */
-    0x0222,  /* #242424 */
-};
+extern u16 got_pal_bg[16];  // defined in globals.c, slot 0 = bg transparent color
 
 // Thor, Hammer, FX (sparkle, explosion)
 static const u16 got_pal_thor[16] = {
@@ -124,6 +107,8 @@ static const u8 bg_tile_transparent_slot[230] = {
 // show the correct background fill color instead of black.
 static inline void got_set_bg_transparent_color(u8 bg_color_tile) {
     u8 slot = (bg_color_tile < 230) ? bg_tile_transparent_slot[bg_color_tile] : 1;
+    // Update both the runtime palette AND the palette array so fade_in picks it up
+    got_pal_bg[0] = got_pal_bg[slot];
     PAL_setColor(0, got_pal_bg[slot]);
 }
 

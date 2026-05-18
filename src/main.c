@@ -342,6 +342,8 @@ void game_loop(void) {
     thor->speed_count = 6;
     music_play(level_type, 1);
     fade_in();
+    // Restore slot 0 after fade (fade_in uses got_pal_bg[] which now has correct slot 0)
+    PAL_setColor(0, got_pal_bg[0]);
 
     while (1) {
         // ── Wait for VBlank, update input, flush DMA ─────────────────────
