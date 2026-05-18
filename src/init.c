@@ -252,6 +252,7 @@ s16 initialize(void) {
 
     // Load initial level
     memcpy(&scrn, get_level_ptr(area, (u8)current_level), sizeof(LEVEL));
+    fix_level_endian(&scrn);
     level_type = scrn.type;
 
     // Spawn Thor sprite

@@ -198,6 +198,7 @@ void thor_dies(void) {
     thor->speed_count = 6;
 
     memcpy(&scrn, get_level_ptr(area, (u8)new_level), sizeof(LEVEL));
+    fix_level_endian(&scrn);
 
     display_health();
     display_magic();
@@ -266,6 +267,7 @@ void setup_load(void) {
     actor[2].used = 0;
     thor->speed_count = 6;
     memcpy(&scrn, get_level_ptr(area, (u8)new_level), sizeof(LEVEL));
+    fix_level_endian(&scrn);
     display_health(); display_magic(); display_jewels();
     display_keys(); display_score(); display_item();
     current_level = new_level;
@@ -334,6 +336,7 @@ void game_loop(void) {
 
     new_level = current_level;
     memcpy(&scrn, get_level_ptr(area, (u8)new_level), sizeof(LEVEL));
+    fix_level_endian(&scrn);
     show_level(current_level);
     exit_flag = 0;
     thor->speed_count = 6;
