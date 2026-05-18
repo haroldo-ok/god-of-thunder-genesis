@@ -253,6 +253,22 @@ typedef struct {
     u8  future[3];
 } LEVEL;
 
+
+// ─── Endianness fix for LEVEL data ────────────────────────────────────────────
+// DOS/x86 stores s16 fields as little-endian. The m68k Genesis is big-endian.
+// After memcpy'ing raw LEVEL binary data, swap the s16 fields.
+static inline void fix_level_endian(LEVEL *lev) {
+    s16 i;
+    for (i = 0; i < LEVEL_MAX_STATIC_OBJ; i++) {
+        // Swap bytes of each s16: [lo, hi] → [hi, lo]
+        u8 *px = (u8 *)&lev->static_x[i];
+        u8 *py = (u8 *)&lev->static_y[i];
+        u8 tmp;
+        tmp = px[0]; px[0] = px[1]; px[1] = tmp;
+        tmp = py[0]; py[0] = py[1]; py[1] = tmp;
+    }
+}
+
 // ─── Level data ROM arrays (defined in level_data.c, built from SDAT1-3) ──────
 extern const u8 level_data_ep1[];   // Episode 1: 120 levels × 512 bytes
 
@@ -490,6 +506,7 @@ void cannot_carry_more(void);
 // Extra globals
 extern u8   end_tile;
 extern u8   apple_drop;
+extern u16  bg_transparent_color;  // current PAL0 slot 0 color (bg fill)
 extern u8   diag;
 extern u8   diag_flag;
 extern u8   thor_special_flag;

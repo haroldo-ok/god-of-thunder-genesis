@@ -210,6 +210,7 @@ void show_level(s16 new_lev) {
 
     // Load new level data from ROM
     memcpy(&scrn, get_level_ptr(area, (u8)new_lev), sizeof(LEVEL));
+    fix_level_endian(&scrn);
     level_type = scrn.type;
 
     // Set PAL0 slot 0 to match bg_color so transparent tile pixels show fill color
@@ -375,6 +376,8 @@ void fade_in(void) {
     SYS_doVBlankProcess();
     SYS_doVBlankProcess();
     SYS_doVBlankProcess();
+    // Restore transparent color after fade (fade ends with slot 0 = allpals[0] = black)
+    PAL_setColor(0, bg_transparent_color);
 }
 
 void fade_out(void) {

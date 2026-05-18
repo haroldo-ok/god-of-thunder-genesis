@@ -11,6 +11,7 @@
 
 // These were scattered across DOS globals in 1_main.c / 1_movpat.c / 1_init.c
 u8   apple_drop = 0;
+u16  bg_transparent_color = 0x00A0;  // default: bright grass green
 u8   thor_icon1 = 0, thor_icon2 = 0, thor_icon3 = 0, thor_icon4 = 0;
 u8   diag       = 0;
 u8   diag_flag  = 0;

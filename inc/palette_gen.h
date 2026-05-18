@@ -122,8 +122,12 @@ static const u8 bg_tile_transparent_slot[230] = {
 
 // Call this after loading scrn.bg_color to make transparent bg-tile pixels
 // show the correct background fill color instead of black.
+extern u16 bg_transparent_color;  // defined in globals.c
+
 static inline void got_set_bg_transparent_color(u8 bg_color_tile) {
     u8 slot = (bg_color_tile < 230) ? bg_tile_transparent_slot[bg_color_tile] : 1;
+    // Store the transparent color and apply it to hardware palette slot 0
+    bg_transparent_color = got_pal_bg[slot];
     PAL_setColor(0, got_pal_bg[slot]);
 }
 
