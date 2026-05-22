@@ -109,6 +109,7 @@ void set_thor_vars(void) {
     thor_y1 = thor->y + 4;          // collision box is inset 4px from top
     thor_x2 = thor->x + thor->width - 1;
     thor_y2 = thor->y + thor->height - 1;
+    thor_real_y1 = thor->y;         // used by special_tile_thor for cave/door detection
     thor_pos = (thor->x / 16) + ((thor->y / 16) * 20);
     thor->center_x = (s8)(thor_pos % 20);
     thor->center_y = (s8)(thor_pos / 20);
